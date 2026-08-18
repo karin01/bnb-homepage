@@ -48,7 +48,7 @@ export default function SignupPage() {
       <PageHero
         eyebrow="Website Account"
         title="홈페이지 가입"
-        description="자료실·게시판을 보기 위한 사이트 계정입니다. 스터디 입회(회비·오픈수업)와는 다른 절차이니, 둘 다 필요하면 가입 후 입회원서도 제출해 주세요."
+        description="홈페이지 계정입니다. 이 가입만으로는 라운지·자료실이 열리지 않습니다. 스터디 활동까지 하려면 입회원서를 내고 회비 확인을 기다려 주세요."
       />
       <section className="mx-auto grid max-w-5xl gap-6 px-5 py-12 lg:grid-cols-[1fr_0.85fr]">
         <form onSubmit={onSubmit} className="glass-card grid gap-4 rounded-3xl p-6">

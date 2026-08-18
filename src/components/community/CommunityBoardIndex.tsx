@@ -1,6 +1,7 @@
 "use client";
 
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { PaidAccessNotice } from "@/components/membership/PaidAccessNotice";
 import { PageHero } from "@/components/ui/PageHero";
 import {
   boardPostPath,
@@ -28,7 +29,7 @@ type BoardPreview = {
 };
 
 export function CommunityBoardIndex() {
-  const { membership, uid, role, isAdmin } = useMembership();
+  const { uid, role, isAdmin } = useMembership();
   const [previews, setPreviews] = useState<BoardPreview[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -37,9 +38,13 @@ export function CommunityBoardIndex() {
     let cancelled = false;
     const load = async () => {
       try {
-        const boards = (await listBoards()).filter((board) => !board.hidden && canAccessBoard(role, board.readRole, isAdmin));
+        const boards = (await listBoards()).filter((board) => !board.hidden);
         const rows = await Promise.all(
           boards.map(async (board) => {
+            const canRead = canAccessBoard(role, board.readRole, isAdmin);
+            if (!canRead) {
+              return { board, posts: [] as BoardPost[] };
+            }
             try {
               const posts = (await listPosts(board.id)).slice(0, PREVIEW_POST_COUNT);
               return { board, posts };
@@ -73,7 +78,7 @@ export function CommunityBoardIndex() {
         compact
         eyebrow="Community"
         title="커뮤니티"
-        description="게시판을 고르거나, 최근 글을 바로 열어 보세요. 신편입생 게시판은 가입 전에도 글을 남길 수 있습니다."
+        description="신편입생 게시판은 가입 전에도 글을 남길 수 있습니다. 라운지·갤러리·자료실은 회비가 확인된 정회원만 봅니다."
       />
       <section className="mx-auto max-w-6xl px-5 py-8 md:py-10">
         {errorMessage ? <p className="mb-4 text-sm text-red-500">{errorMessage}</p> : null}
@@ -102,7 +107,8 @@ export function CommunityBoardIndex() {
 
         <div className="grid gap-4 md:grid-cols-2">
           {previews.map(({ board, posts }) => {
-            const canWrite = canWriteOnBoard(role, board.writeRole, isAdmin, membership === "member" && Boolean(uid));
+            const canRead = canAccessBoard(role, board.readRole, isAdmin);
+            const canWrite = canWriteOnBoard(role, board.writeRole, isAdmin, Boolean(uid));
             const isGallery = board.skin === "gallery";
             const galleryPosts = isGallery ? posts.filter((post) => postCoverUrl(post)) : [];
 
@@ -134,6 +140,8 @@ export function CommunityBoardIndex() {
                   </div>
                 </div>
 
+                {canRead ? (
+                <>
                 {isGallery && galleryPosts.length > 0 ? (
                   <div className="mb-3 grid grid-cols-3 gap-2">
                     {galleryPosts.slice(0, 3).map((post) => (
@@ -164,6 +172,12 @@ export function CommunityBoardIndex() {
                       </li>
                     ))}
                   </ul>
+                )}
+                </>
+                ) : (
+                  <div className="py-2">
+                    <PaidAccessNotice />
+                  </div>
                 )}
               </article>
             );

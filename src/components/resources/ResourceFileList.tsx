@@ -1,6 +1,7 @@
 "use client";
 
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { PaidAccessNotice } from "@/components/membership/PaidAccessNotice";
 import { formatFileSize, type ResourceItem } from "@/data/resources";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { useResources } from "@/hooks/useResources";
@@ -14,7 +15,7 @@ type ResourceFileListProps = {
 
 /** 한 학년 자료실, 또는 자료실 허브의 전체 목록을 보여 줍니다. */
 export function ResourceFileList({ grade }: ResourceFileListProps) {
-  const { membership } = useMembership();
+  const { isStudyMember } = useMembership();
   const { resources, isLoading, errorMessage } = useResources();
   const [keyword, setKeyword] = useState("");
   const [downloadMessage, setDownloadMessage] = useState("");
@@ -54,8 +55,9 @@ export function ResourceFileList({ grade }: ResourceFileListProps) {
           {isLoading ? "자료를 불러오는 중..." : `${filtered.length}개 / 전체 ${gradeCount}개`}
         </p>
       </div>
-      {errorMessage ? <p className="mt-4 text-sm text-red-500">{errorMessage}</p> : null}
+      {isStudyMember ? errorMessage ? <p className="mt-4 text-sm text-red-500">{errorMessage}</p> : null : <div className="mt-6"><PaidAccessNotice /></div>}
       {downloadMessage ? <p className="mt-4 text-sm text-red-500">{downloadMessage}</p> : null}
+      {isStudyMember ? (
       <div className="mt-6 grid gap-3">
         {!isLoading && filtered.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">
@@ -75,7 +77,7 @@ export function ResourceFileList({ grade }: ResourceFileListProps) {
                   {item.date} · {item.fileName} · {formatFileSize(item.fileSize)}
                 </p>
               </div>
-              {membership === "member" ? (
+              {isStudyMember ? (
                 <button
                   type="button"
                   onClick={() => void onDownload(item)}
@@ -84,14 +86,15 @@ export function ResourceFileList({ grade }: ResourceFileListProps) {
                   다운로드
                 </button>
               ) : (
-                <Link href="/login" className="text-sm font-medium text-cyan-700 dark:text-cyan-glow">
-                  회원 로그인 후 열람
+                <Link href="/join/apply" className="text-sm font-medium text-cyan-700 dark:text-cyan-glow">
+                  정회원만 열람
                 </Link>
               )}
             </article>
           ))
         )}
       </div>
+      ) : null}
     </div>
   );
 }

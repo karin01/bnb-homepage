@@ -43,7 +43,7 @@ export default function AdminHomePage() {
       <div>
         <h1 className="text-2xl font-semibold">운영 한눈에 보기</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          홈페이지 가입은 Firestore `members`에 쌓입니다. 입회원서는 구글폼을 확인한 뒤 회원 관리에서 정회원으로 올리면 됩니다.
+          홈페이지 가입은 Firestore `members`에 쌓입니다. 입회원서와 회비가 확인되면 회원 관리에서 정회원으로 올리세요. 홈페이지 회원만으로는 라운지·자료실이 열리지 않습니다.
         </p>
       </div>
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}

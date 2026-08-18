@@ -40,7 +40,7 @@ export default function ResourcesPage() {
       <PageHero
         eyebrow="Archive"
         title="연도 · 학기 · 과목 태그로 찾는 자료실"
-        description="학년 방을 누르면 그 게시판으로 들어갑니다. 모든 방에서 쉐어노트를 올릴 수 있고, 1~4학년에는 운영진 자료도 같이 보입니다."
+        description="학년 방을 누르면 그 게시판으로 들어갑니다. 노트와 운영진 자료는 회비가 확인된 정회원만 보고 올릴 수 있습니다."
       />
       <section className="mx-auto max-w-6xl px-5 py-10">
         <div className="mb-6 flex items-center justify-between">

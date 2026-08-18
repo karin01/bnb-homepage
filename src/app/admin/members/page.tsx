@@ -136,6 +136,24 @@ export default function AdminMembersPage() {
     }
   };
 
+  const applySelectedStudyRole = async () => {
+    if (selectedIds.length === 0) {
+      setErrorMessage("먼저 회원을 선택해 주세요.");
+      return;
+    }
+    if (!window.confirm(`선택한 ${selectedIds.length}명을 정회원으로 올릴까요? 회비와 입회가 확인된 분만 올리세요.`)) {
+      return;
+    }
+    setErrorMessage("");
+    try {
+      await updateSelectedMembers(selectedIds, { role: "study" });
+      await loadMemberList();
+      setSelectedIds([]);
+    } catch (error) {
+      setErrorMessage(toKoreanFirebaseError(error, "정회원으로 올리지 못했습니다."));
+    }
+  };
+
   const onAddMember = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSaving(true);
@@ -176,10 +194,13 @@ export default function AdminMembersPage() {
         <div>
           <h1 className="text-2xl font-semibold">회원 관리</h1>
           <p className="mt-2 text-sm text-[var(--text-muted)]">
-            구글폼 입회와 회비가 확인되면 정회원으로 올립니다. 차단·탈퇴는 로그인만 막고, 아이디는 다시 쓰지 못하도록 남겨 둡니다.
+            구글폼 입회와 회비가 확인되면 정회원으로 올립니다. 홈페이지 회원은 신편입생 게시판 등 공개 칸만 보고, 라운지·자료실은 정회원부터 열립니다. 차단·탈퇴는 로그인만 막고, 아이디는 다시 쓰지 못하도록 남겨 둡니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => void applySelectedStudyRole()} className="rounded-full bg-cyan-500 px-3 py-2 text-sm font-semibold text-navy-950">
+            선택 정회원
+          </button>
           <button type="button" onClick={() => void applySelectedStatus("active")} className="rounded-full border border-[var(--line)] px-3 py-2 text-sm">
             선택 정상
           </button>

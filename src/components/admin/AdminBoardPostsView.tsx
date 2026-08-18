@@ -209,7 +209,7 @@ export function AdminBoardPostsView({ boardId }: { boardId: string }) {
           <button type="submit" disabled={isSaving} className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60">
             {isSaving ? "저장 중..." : "등급 저장"}
           </button>
-          <p className="md:col-span-3 text-xs text-[var(--text-muted)]">모두 = 손님도 봄·씀 · 사이트 회원 = 가입자 · 정회원 = 입회 확인 후 · 운영진 = 관리자만. 쓰기 모두는 스팸 위험이 있어 신편입생 게시판에만 권합니다.</p>
+          <p className="md:col-span-3 text-xs text-[var(--text-muted)]">모두 = 손님도 봄·씀 · 홈페이지 회원 = 가입만 한 사람 · 정회원 = 입회·회비 확인 후 · 운영진 = 관리자만. 라운지·갤러리·자료실은 정회원으로 두는 것을 권합니다. 쓰기 모두는 신편입생 게시판에만 쓰세요.</p>
         </form>
       ) : null}
 

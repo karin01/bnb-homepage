@@ -27,7 +27,7 @@ function createImageKey() {
 
 export function PostEditor({ boardId, postId }: { boardId: string; postId?: string }) {
   const router = useRouter();
-  const { membership, uid, memberName, role, isAdmin } = useMembership();
+  const { uid, memberName, role, isAdmin } = useMembership();
   const [board, setBoard] = useState<BoardConfig | null>(null);
   const [existing, setExisting] = useState<BoardPost | null>(null);
   const [title, setTitle] = useState("");
@@ -83,7 +83,7 @@ export function PostEditor({ boardId, postId }: { boardId: string; postId?: stri
   }, []);
 
   const hasAuthAccount = Boolean(uid);
-  const canWrite = board ? canWriteOnBoard(role, board.writeRole, isAdmin, membership === "member") : false;
+  const canWrite = board ? canWriteOnBoard(role, board.writeRole, isAdmin, Boolean(uid)) : false;
   const canEditExisting = existing ? isAdmin || (hasAuthAccount && existing.authorUid === uid) : true;
   const allowFileUpload = hasAuthAccount;
   const maxImages = board ? maxImagesForSkin(board.skin) : 1;

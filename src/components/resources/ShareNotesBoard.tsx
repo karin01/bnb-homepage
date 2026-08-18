@@ -2,6 +2,7 @@
 
 import { archiveRoomLabel, parseArchiveRoomId, shareNotePath, toArchiveRoomField, type ArchiveRoomId } from "@/data/resources";
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { PaidAccessNotice } from "@/components/membership/PaidAccessNotice";
 import { SubjectSelectField } from "@/components/resources/SubjectSelectField";
 import {
   SHARE_NOTE_MAX_BODY_LENGTH,
@@ -38,7 +39,7 @@ function noteKindLabel(item: ShareNoteItem) {
 /** 게시판 목록처럼 제목을 누르면 글이 열리고, 공부 기능은 그 안에서 씁니다. */
 export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
   const router = useRouter();
-  const { membership, uid, memberName, status } = useMembership();
+  const { uid, memberName, status, isStudyMember } = useMembership();
   const { notes, isLoading, errorMessage, reload } = useShareNotes();
   const [keyword, setKeyword] = useState("");
   const [showWriter, setShowWriter] = useState(false);
@@ -57,7 +58,7 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
   );
   const filtered = useMemo(() => filterShareNotes(notes, keyword, room), [keyword, notes, room]);
   const writeRoom = room ?? (pickedRoom === "" ? undefined : pickedRoom);
-  const canUpload = membership === "member";
+  const canUpload = isStudyMember;
 
   const resetForm = () => {
     setPickedRoom("");
@@ -114,7 +115,7 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
 
   return (
     <div className="grid gap-6">
-      {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
+      {isStudyMember ? errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null : null}
       {formError ? <p className="text-sm text-red-500">{formError}</p> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -129,8 +130,8 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
           </button>
         ) : null}
         {status === "ready" && !canUpload ? (
-          <Link href="/login" className="text-sm font-medium text-cyan-700 dark:text-cyan-glow">
-            로그인 후 글쓰기
+          <Link href={uid ? "/join/apply" : "/login"} className="text-sm font-medium text-cyan-700 dark:text-cyan-glow">
+            {uid ? "정회원만 글쓰기" : "로그인 후 글쓰기"}
           </Link>
         ) : null}
       </div>
@@ -212,6 +213,10 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
         </form>
       ) : null}
 
+      {status === "ready" && !isStudyMember ? <PaidAccessNotice /> : null}
+
+      {isStudyMember ? (
+      <>
       <div className="flex flex-col gap-3 md:flex-row">
         <input
           value={keyword}
@@ -258,6 +263,8 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
           ))
         )}
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

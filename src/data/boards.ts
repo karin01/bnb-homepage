@@ -36,14 +36,14 @@ export type PostImage = {
 
 export const BOARD_READ_ROLE_LABELS: Record<BoardReadRole, string> = {
   guest: "모두",
-  site: "사이트 회원",
+  site: "홈페이지 회원",
   study: "정회원",
   admin: "운영진",
 };
 
 export const BOARD_WRITE_ROLE_LABELS: Record<BoardWriteRole, string> = {
   guest: "모두",
-  site: "사이트 회원",
+  site: "홈페이지 회원",
   study: "정회원",
   admin: "운영진",
 };
@@ -93,10 +93,10 @@ export const DEFAULT_BOARDS: BoardConfig[] = [
     id: "notice",
     group: "커뮤니티",
     title: "공지·회계",
-    description: "오픈수업, OT, 회비 내역처럼 모든 학우가 알아야 할 안내입니다.",
+    description: "오픈수업, OT, 회비 내역처럼 정회원이 알아야 할 안내입니다.",
     skin: "list",
     order: 10,
-    readRole: "guest",
+    readRole: "study",
     writeRole: "admin",
     commentEnabled: true,
     searchEnabled: true,
@@ -109,8 +109,8 @@ export const DEFAULT_BOARDS: BoardConfig[] = [
     description: "소모임 모집, 학습 후기, 학우들의 자유로운 이야기를 모으는 게시판입니다.",
     skin: "list",
     order: 20,
-    readRole: "site",
-    writeRole: "site",
+    readRole: "study",
+    writeRole: "study",
     commentEnabled: true,
     searchEnabled: true,
     hidden: false,
@@ -122,8 +122,8 @@ export const DEFAULT_BOARDS: BoardConfig[] = [
     description: "신년회, OT, MT, 스터디룸의 하루를 사진과 글로 남깁니다.",
     skin: "gallery",
     order: 30,
-    readRole: "guest",
-    writeRole: "site",
+    readRole: "study",
+    writeRole: "study",
     commentEnabled: true,
     searchEnabled: true,
     hidden: false,
@@ -148,8 +148,8 @@ export const DEFAULT_BOARDS: BoardConfig[] = [
     description: "소모임 공지와 모집, 진행 이야기를 남기는 공간입니다.",
     skin: "list",
     order: 50,
-    readRole: "site",
-    writeRole: "site",
+    readRole: "study",
+    writeRole: "study",
     commentEnabled: true,
     searchEnabled: true,
     hidden: false,
@@ -195,6 +195,21 @@ const ROLE_RANK: Record<BoardReadRole, number> = {
   study: 2,
   admin: 3,
 };
+
+/** 회비 확인 전에는 너무 열려 있으면 안 되는 기본 게시판 */
+const PAID_BOARD_IDS = new Set(["notice", "free", "gallery", "club"]);
+
+/** 이미 있는 게시판이 홈페이지 회원에게 열려 있으면 정회원으로 올립니다. */
+export function tightenBoardToPaidRole(board: BoardConfig): BoardConfig {
+  if (!PAID_BOARD_IDS.has(board.id)) {
+    return board;
+  }
+  return {
+    ...board,
+    readRole: board.readRole === "guest" || board.readRole === "site" ? "study" : board.readRole,
+    writeRole: board.writeRole === "guest" || board.writeRole === "site" ? "study" : board.writeRole,
+  };
+}
 
 export function memberRoleToReadRole(role: MemberRole | null): BoardReadRole {
   if (role === "admin") return "admin";

@@ -416,7 +416,7 @@ service cloud.firestore {
     }
 
     match /resources/{resourceId} {
-      allow read: if true;
+      allow read: if canAccessRole('study');
 
       allow create, update: if isAdmin()
         && isValidResource(request.resource.data, resourceId)
@@ -474,14 +474,14 @@ service cloud.firestore {
     }
 
     match /shareNotes/{noteId} {
-      allow read: if true;
+      allow read: if canAccessRole('study');
 
       allow create: if isAuthenticated()
         && isValidShareNote(request.resource.data, noteId)
         && request.resource.data.uploaderUid == request.auth.uid
         && isRecentTimestamp(request.resource.data.createdAt)
         && isRecentTimestamp(request.resource.data.updatedAt)
-        && (isAdmin() || canAccessRole('site'));
+        && (isAdmin() || canAccessRole('study'));
 
       allow update: if (isAdmin() || isOwner(resource.data.uploaderUid))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'tags', 'subject', 'updatedAt'])

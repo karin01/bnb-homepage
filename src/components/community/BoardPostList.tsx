@@ -1,6 +1,7 @@
 "use client";
 
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { PaidAccessNotice } from "@/components/membership/PaidAccessNotice";
 import { PageHero } from "@/components/ui/PageHero";
 import {
   adminBoardPostsPath,
@@ -21,7 +22,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 export function BoardPostList({ boardId }: { boardId: string }) {
-  const { membership, role, isAdmin } = useMembership();
+  const { uid, role, isAdmin } = useMembership();
   const [board, setBoard] = useState<BoardConfig | null>(null);
   const [posts, setPosts] = useState<BoardPost[]>([]);
   const [keyword, setKeyword] = useState("");
@@ -80,16 +81,13 @@ export function BoardPostList({ boardId }: { boardId: string }) {
       <>
         <PageHero eyebrow={board.group} title={board.title} description={board.description} />
         <section className="mx-auto max-w-4xl px-5 py-16">
-          <p className="text-sm text-[var(--text-muted)]">이 게시판은 로그인한 회원만 볼 수 있습니다.</p>
-          <Link href="/login" className="mt-4 inline-block text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
-            로그인하기
-          </Link>
+          <PaidAccessNotice />
         </section>
       </>
     );
   }
 
-  const canWrite = board ? canWriteOnBoard(role, board.writeRole, isAdmin, membership === "member") : false;
+  const canWrite = board ? canWriteOnBoard(role, board.writeRole, isAdmin, Boolean(uid)) : false;
 
   return (
     <>

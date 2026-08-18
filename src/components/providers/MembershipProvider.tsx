@@ -9,7 +9,8 @@ import {
   type SignupInput,
 } from "@/lib/accounts";
 import { canLoginWithStatus, type MemberStatus } from "@/lib/member-status";
-import { canOpenAdmin, canUseResourceArchive, type MemberRole } from "@/lib/member-roles";
+import { listBoardsOrSeed } from "@/lib/boards";
+import { canOpenAdmin, canUsePaidContent, type MemberRole } from "@/lib/member-roles";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type MembershipContextValue = {
@@ -22,6 +23,8 @@ type MembershipContextValue = {
   role: MemberRole | null;
   memberStatus: MemberStatus | null;
   isAdmin: boolean;
+  isLoggedIn: boolean;
+  isStudyMember: boolean;
   emailVerified: boolean;
   signup: (input: SignupInput) => Promise<void>;
   login: (loginId: string, password: string) => Promise<void>;
@@ -90,19 +93,30 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
     return unsubscribe;
   }, []);
 
+  const isLoggedIn = Boolean(uid) && memberStatus !== "blocked" && memberStatus !== "withdrawn";
+  const isAdmin = canOpenAdmin(role, email, emailVerified) && memberStatus !== "blocked" && memberStatus !== "withdrawn";
+  const isStudyMember = isLoggedIn && (canUsePaidContent(role) || isAdmin);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+    void listBoardsOrSeed().catch(() => undefined);
+  }, [isAdmin]);
+
   const value = useMemo(
     () => ({
       status,
-      membership: uid && canUseResourceArchive(role) && memberStatus !== "blocked" && memberStatus !== "withdrawn"
-        ? ("member" as const)
-        : ("guest" as const),
+      membership: isLoggedIn ? ("member" as const) : ("guest" as const),
       uid,
       memberName,
       loginId,
       email,
       role,
       memberStatus,
-      isAdmin: canOpenAdmin(role, email, emailVerified) && memberStatus !== "blocked" && memberStatus !== "withdrawn",
+      isAdmin,
+      isLoggedIn,
+      isStudyMember,
       emailVerified,
       signup: async (input: SignupInput) => {
         const session = await signupAccount(input);
@@ -137,7 +151,7 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
         setEmailVerified(false);
       },
     }),
-    [status, uid, memberName, loginId, email, role, memberStatus, emailVerified],
+    [status, uid, memberName, loginId, email, role, memberStatus, emailVerified, isLoggedIn, isAdmin, isStudyMember],
   );
 
   return <MembershipContext.Provider value={value}>{children}</MembershipContext.Provider>;

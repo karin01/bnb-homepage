@@ -1,6 +1,7 @@
 "use client";
 
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { PaidAccessNotice } from "@/components/membership/PaidAccessNotice";
 import { PageHero } from "@/components/ui/PageHero";
 import { ZoomableImageList } from "@/components/ui/ZoomableImageList";
 import { boardEditPath, boardPublicPath, canAccessBoard, canWriteOnBoard, createGuestAuthorId, formatPostDate, listPostImageUrls, validateGuestDisplayName, type BoardComment, type BoardConfig, type BoardPost } from "@/data/boards";
@@ -13,7 +14,7 @@ import { FormEvent, useEffect, useState } from "react";
 
 export function PostDetailView({ boardId, postId }: { boardId: string; postId: string }) {
   const router = useRouter();
-  const { membership, uid, memberName, role, isAdmin } = useMembership();
+  const { uid, memberName, role, isAdmin } = useMembership();
   const [board, setBoard] = useState<BoardConfig | null>(null);
   const [post, setPost] = useState<BoardPost | null>(null);
   const [comments, setComments] = useState<BoardComment[]>([]);
@@ -101,16 +102,13 @@ export function PostDetailView({ boardId, postId }: { boardId: string; postId: s
   if (!canAccessBoard(role, board.readRole, isAdmin)) {
     return (
       <section className="mx-auto max-w-4xl px-5 py-16">
-        <p className="text-sm text-[var(--text-muted)]">이 글은 로그인한 회원만 볼 수 있습니다.</p>
-        <Link href="/login" className="mt-4 inline-block text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
-          로그인하기
-        </Link>
+        <PaidAccessNotice />
       </section>
     );
   }
 
   const canManagePost = isAdmin || Boolean(uid && post.authorUid === uid);
-  const canComment = board.commentEnabled && canWriteOnBoard(role, board.writeRole, isAdmin, membership === "member");
+  const canComment = board.commentEnabled && canWriteOnBoard(role, board.writeRole, isAdmin, Boolean(uid));
   const hasAuthAccount = Boolean(uid);
   const postImageUrls = listPostImageUrls(post);
 

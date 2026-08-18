@@ -1,6 +1,7 @@
 "use client";
 
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { PaidAccessNotice } from "@/components/membership/PaidAccessNotice";
 import { SubjectSelectField } from "@/components/resources/SubjectSelectField";
 import { PageHero } from "@/components/ui/PageHero";
 import { ZoomableImageList } from "@/components/ui/ZoomableImageList";
@@ -28,7 +29,7 @@ type StudyAction = "summarize" | "quiz";
 /** 제목을 눌러 들어온 쉐어노트 글. 공부하기·다운로드·정리·퀴즈를 한곳에 둡니다. */
 export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: string }) {
   const router = useRouter();
-  const { membership, uid, isAdmin } = useMembership();
+  const { uid, isAdmin, isStudyMember } = useMembership();
   const [note, setNote] = useState<ShareNoteItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -74,7 +75,7 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
     };
   }, [noteId]);
 
-  const canOpenFile = membership === "member";
+  const canOpenFile = isStudyMember;
   const canManage = Boolean(note && (isAdmin || (uid && note.uploaderUid === uid)));
   const listPath = note ? resourceBoardPath(note.room) : "/academics/resources";
 
@@ -319,12 +320,9 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
             ) : null}
           </div>
         ) : (
-          <p className="mt-6 text-sm text-[var(--text-muted)]">
-            공부하기와 다운로드는 로그인한 회원만 할 수 있습니다.{" "}
-            <Link href="/login" className="font-medium text-cyan-700 dark:text-cyan-glow">
-              로그인하기
-            </Link>
-          </p>
+          <div className="mt-6">
+            <PaidAccessNotice />
+          </div>
         )}
 
         {studyBusy ? <p className="mt-4 text-sm text-[var(--text-muted)]">PDF를 읽고 있습니다. 조금 기다려 주세요.</p> : null}

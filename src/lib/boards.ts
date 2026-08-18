@@ -8,6 +8,7 @@ import {
   isBoardReadRole,
   isBoardSkin,
   isBoardWriteRole,
+  tightenBoardToPaidRole,
   type BoardConfig,
 } from "@/data/boards";
 
@@ -147,10 +148,28 @@ async function ensureGuestQaBoard() {
   );
 }
 
+/** 라운지·갤러리처럼 회비 확인 후에만 열어야 하는 게시판 등급을 맞춥니다. */
+async function ensurePaidBoardRoles() {
+  const existing = await listBoards();
+  const updates = existing
+    .map((board) => tightenBoardToPaidRole(board))
+    .filter((next, index) => next.readRole !== existing[index].readRole || next.writeRole !== existing[index].writeRole);
+  if (updates.length === 0) {
+    return;
+  }
+  const db = getFirebaseDb();
+  const batch = writeBatch(db);
+  updates.forEach((board) => {
+    batch.set(doc(db, BOARD_COLLECTION, board.id), toFirestoreBoard(board));
+  });
+  await batch.commit();
+}
+
 export async function listBoardsOrSeed() {
   try {
     await seedDefaultBoardsIfEmpty();
     await ensureGuestQaBoard();
+    await ensurePaidBoardRoles();
     return await listBoards();
   } catch {
     return listBoards();
