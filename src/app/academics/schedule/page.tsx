@@ -2,20 +2,24 @@
 
 import { PageHero } from "@/components/ui/PageHero";
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { CalendarDayMarks, CalendarMarkLegend } from "@/components/schedule/CalendarDayMarks";
+import { CalendarEventCard } from "@/components/schedule/CalendarEventCard";
 import {
+  calendarDayMarks,
   calendarEventMatchesCampus,
   calendarEventOccursOnDate,
-  formatCalendarEventMeta,
-  formatCalendarEventPeriod,
   formatLecturePeriod,
   formatLectureWhen,
   GRADE_OPTIONS,
   CALENDAR_CAMPUSES,
+  CALENDAR_EVENT_CATEGORIES,
   gradeLabel,
   lecturesOnDate,
   parseCalendarCampus,
   parseGrade,
+  sortCalendarEventsForDisplay,
   type CalendarCampus,
+  type CalendarEvent,
   type Grade,
 } from "@/data/schedule";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
@@ -35,6 +39,7 @@ export default function SchedulePage() {
   const [subjectQuery, setSubjectQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<"all" | Grade>("all");
   const [campusFilter, setCampusFilter] = useState<CalendarCampus>("all");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | CalendarEvent["category"]>("all");
 
   const days = useMemo(() => {
     const year = monthCursor.getFullYear();
@@ -50,24 +55,32 @@ export default function SchedulePage() {
     return cells;
   }, [monthCursor]);
 
-  const datesWithItems = useMemo(() => {
-    const marked = new Set<string>();
+  const marksByDate = useMemo(() => {
+    const marked = new Map<string, ReturnType<typeof calendarDayMarks>>();
     days.forEach((cell) => {
       if (!cell) {
         return;
       }
-      if (events.some((event) => calendarEventOccursOnDate(event, cell.date) && calendarEventMatchesCampus(event, campusFilter))) {
-        marked.add(cell.date);
-      }
-      if (lecturesOnDate(lectures, cell.date).length > 0) {
-        marked.add(cell.date);
+      const marks = calendarDayMarks(events, lectures, cell.date, campusFilter, categoryFilter);
+      if (marks.length > 0) {
+        marked.set(cell.date, marks);
       }
     });
     return marked;
-  }, [days, lectures, events, campusFilter]);
+  }, [campusFilter, categoryFilter, days, events, lectures]);
 
-  const dayEvents = events.filter((event) => calendarEventOccursOnDate(event, selectedDate) && calendarEventMatchesCampus(event, campusFilter));
-  const dayLectures = lecturesOnDate(lectures, selectedDate);
+  const dayEvents = sortCalendarEventsForDisplay(
+    events.filter((event) => {
+      if (!calendarEventOccursOnDate(event, selectedDate) || !calendarEventMatchesCampus(event, campusFilter)) {
+        return false;
+      }
+      if (categoryFilter !== "all" && event.category !== categoryFilter) {
+        return false;
+      }
+      return true;
+    }),
+  );
+  const dayLectures = categoryFilter === "all" || categoryFilter === "스터디" ? lecturesOnDate(lectures, selectedDate) : [];
   const filteredLectures = useMemo(() => {
     const needle = subjectQuery.trim().toLowerCase();
     const gradeFromQuery = needle ? parseGrade(needle.replace("학년", "")) : null;
@@ -92,7 +105,7 @@ export default function SchedulePage() {
       <PageHero
         eyebrow="Calendar"
         title="학사일정 + 스터디 강의 통합 캘린더"
-        description="출석수업, 과제 마감, 기말평가와 BnB 정규 강의를 한 화면에서 봅니다. 학년과 과목 이름으로 주간 시간표를 필터할 수 있습니다."
+        description="출석수업·시험 같은 학사는 주황색, 스터디는 청록색으로 구분합니다. 학년과 과목 이름으로 주간 시간표를 필터할 수 있습니다."
       />
       <section className="mx-auto grid max-w-6xl gap-6 px-5 py-12 lg:grid-cols-[1.1fr_0.9fr]">
         <article className="glass-card rounded-3xl p-6">
@@ -121,31 +134,54 @@ export default function SchedulePage() {
             {WEEKDAYS.map((weekday) => (
               <span key={weekday}>{weekday}</span>
             ))}
-            {days.map((cell, index) =>
-              cell ? (
+            {days.map((cell, index) => {
+              const marks = cell ? marksByDate.get(cell.date) ?? [] : [];
+              const hasAcademic = marks.includes("학사");
+              return cell ? (
                 <button
                   key={cell.date}
                   type="button"
                   onClick={() => setSelectedDate(cell.date)}
                   className={`rounded-xl py-3 text-sm ${
-                    selectedDate === cell.date ? "bg-cyan-500 text-navy-950" : "hover:bg-black/5 dark:hover:bg-white/5"
+                    selectedDate === cell.date
+                      ? "bg-cyan-500 text-navy-950"
+                      : hasAcademic
+                        ? "bg-amber-100 text-amber-950 hover:bg-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:hover:bg-amber-400/25"
+                        : "hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   {cell.day}
-                  {datesWithItems.has(cell.date) ? (
-                    <span className="mt-1 block h-1.5 w-1.5 mx-auto rounded-full bg-cyan-400" />
-                  ) : null}
+                  <CalendarDayMarks marks={marks} inverted={selectedDate === cell.date} />
                 </button>
               ) : (
                 <span key={`empty-${index}`} />
-              ),
-            )}
+              );
+            })}
           </div>
+          <CalendarMarkLegend />
         </article>
         <article className="glass-card rounded-3xl p-6">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold">{selectedDate} 일정</h2>
             <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={categoryFilter}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (value === "all" || CALENDAR_EVENT_CATEGORIES.includes(value as CalendarEvent["category"])) {
+                    setCategoryFilter(value as "all" | CalendarEvent["category"]);
+                  }
+                }}
+                className="rounded-full border border-[var(--line)] bg-transparent px-3 py-1.5 text-sm"
+                aria-label="일정 구분 필터"
+              >
+                <option value="all">전체 구분</option>
+                {CALENDAR_EVENT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category === "학사" ? "학사(시험·출석)" : category}
+                  </option>
+                ))}
+              </select>
               <select
                 value={campusFilter}
                 onChange={(event) => {
@@ -176,21 +212,19 @@ export default function SchedulePage() {
             ) : (
               <>
                 {dayEvents.map((event) => (
-                  <div key={event.id} className="rounded-2xl border border-[var(--line)] p-4">
-                    <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                      {formatCalendarEventMeta(event)} · {formatCalendarEventPeriod(event)}
-                    </p>
-                    <p className="mt-1 font-medium">{event.title}</p>
-                    <p className="mt-2 text-sm text-[var(--text-muted)]">{event.description}</p>
-                  </div>
+                  <CalendarEventCard key={event.id} event={event} />
                 ))}
                 {dayLectures.map((lecture) => (
-                  <div key={`${lecture.id}-${selectedDate}`} className="rounded-2xl border border-[var(--line)] p-4">
-                    <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                      스터디 · {lecture.type} · {gradeLabel(lecture.grade)}
+                  <div
+                    key={`${lecture.id}-${selectedDate}`}
+                    className="relative overflow-hidden rounded-2xl border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-500/30 dark:bg-sky-400/10"
+                  >
+                    <span className="absolute inset-y-0 left-0 w-1.5 bg-sky-400" aria-hidden />
+                    <p className="pl-2 text-xs font-semibold text-sky-700 dark:text-sky-300">
+                      정규 강의 · {lecture.type} · {gradeLabel(lecture.grade)}
                     </p>
-                    <p className="mt-1 font-medium">{lecture.subject}</p>
-                    <p className="mt-2 text-sm text-[var(--text-muted)]">
+                    <p className="mt-1 pl-2 font-medium">{lecture.subject}</p>
+                    <p className="mt-2 pl-2 text-sm text-[var(--text-muted)]">
                       {lecture.startTime}~{lecture.endTime} · {lecture.room} · 강사 {lecture.instructor}
                     </p>
                   </div>

@@ -490,6 +490,88 @@ export function formatCalendarEventMeta(event: CalendarEvent) {
   return parts.join(" · ");
 }
 
+/** 학사(시험·출석)가 스터디보다 위에 오도록 목록을 정렬합니다. */
+const CALENDAR_CATEGORY_SORT_RANK: Record<CalendarEvent["category"], number> = {
+  학사: 0,
+  행사: 1,
+  스터디: 2,
+};
+
+export function compareCalendarEventsForDisplay(left: CalendarEvent, right: CalendarEvent) {
+  const categoryDiff = CALENDAR_CATEGORY_SORT_RANK[left.category] - CALENDAR_CATEGORY_SORT_RANK[right.category];
+  if (categoryDiff !== 0) {
+    return categoryDiff;
+  }
+  const dateDiff = left.date.localeCompare(right.date);
+  if (dateDiff !== 0) {
+    return dateDiff;
+  }
+  return left.title.localeCompare(right.title, "ko");
+}
+
+export function sortCalendarEventsForDisplay(events: CalendarEvent[]) {
+  return [...events].sort(compareCalendarEventsForDisplay);
+}
+
+/** 제목·설명에서 시험·출석·과제를 찾아, 카드에 붙일 강조 꼬리표를 고릅니다. */
+export function calendarEventHighlightLabel(event: CalendarEvent) {
+  const text = `${event.title} ${event.description}`;
+  if (/기말/.test(text)) {
+    return "기말";
+  }
+  if (/중간/.test(text)) {
+    return "중간";
+  }
+  if (/출석/.test(text)) {
+    return "출석수업";
+  }
+  if (/과제|마감/.test(text)) {
+    return "과제 마감";
+  }
+  if (/시험|평가/.test(text)) {
+    return "시험";
+  }
+  return "";
+}
+
+/** 달력 칸에 찍는 점. 학사는 주황이라 시험·출석 날이 한눈에 보입니다. */
+export type CalendarDayMark = "학사" | "스터디" | "행사" | "강의";
+
+export const CALENDAR_DAY_MARK_ORDER: CalendarDayMark[] = ["학사", "스터디", "행사", "강의"];
+
+export function calendarDayMarks(
+  events: CalendarEvent[],
+  lectures: LectureSlot[],
+  dateString: string,
+  campusFilter: CalendarCampus,
+  categoryFilter: "all" | CalendarEvent["category"] = "all",
+): CalendarDayMark[] {
+  const matchingEvents = events.filter((event) => {
+    if (!calendarEventOccursOnDate(event, dateString) || !calendarEventMatchesCampus(event, campusFilter)) {
+      return false;
+    }
+    if (categoryFilter !== "all" && event.category !== categoryFilter) {
+      return false;
+    }
+    return true;
+  });
+  const marks: CalendarDayMark[] = [];
+  if (matchingEvents.some((event) => event.category === "학사")) {
+    marks.push("학사");
+  }
+  if (matchingEvents.some((event) => event.category === "스터디")) {
+    marks.push("스터디");
+  }
+  if (matchingEvents.some((event) => event.category === "행사")) {
+    marks.push("행사");
+  }
+  const showLectures = categoryFilter === "all" || categoryFilter === "스터디";
+  if (showLectures && lecturesOnDate(lectures, dateString).length > 0) {
+    marks.push("강의");
+  }
+  return marks;
+}
+
 export const CALENDAR_EVENT_CATEGORIES: CalendarEvent["category"][] = ["학사", "스터디", "행사"];
 
 /** 방통대 학사 + BnB 일정을 한 캘린더에서 보기 위한 샘플 */

@@ -8,9 +8,8 @@ import {
   CALENDAR_REPEAT_HINTS,
   SEMESTER_END_DATE,
   SEMESTER_START_DATE,
-  formatCalendarEventMeta,
-  formatCalendarEventPeriod,
   parseCalendarCampus,
+  sortCalendarEventsForDisplay,
   parseCalendarMeetingMode,
   parseCalendarRepeatCycle,
   withDefaultCalendarRepeat,
@@ -18,6 +17,7 @@ import {
   type CalendarRepeatCycle,
 } from "@/data/schedule";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { CalendarEventCard } from "@/components/schedule/CalendarEventCard";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { removeCalendarEvent, saveCalendarEvent, validateCalendarEvent } from "@/lib/calendar-events";
 import { FormEvent, useState } from "react";
@@ -104,6 +104,7 @@ export default function AdminCalendarPage() {
         <h1 className="text-2xl font-semibold">학사·스터디 일정</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
           OT·과제 마감은 하루, 출석수업은 기간, 정기 모임은 매주/격주로 넣으면 됩니다. 매주 반복되는 정규 강의는 수업 시간표에서 등록합니다.
+          시험·출석·과제는 구분을 <strong className="font-semibold text-amber-700 dark:text-amber-300">학사</strong>로 두면 달력에서 주황색으로 먼저 보입니다.
         </p>
       </div>
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
@@ -241,24 +242,25 @@ export default function AdminCalendarPage() {
       <article className="glass-card rounded-3xl p-5">
         <h2 className="font-semibold">등록된 일정 {isLoading ? "" : `(${events.length})`}</h2>
         <div className="mt-4 grid gap-2">
-          {events.map((item) => (
-            <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-[var(--line)] px-4 py-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                  {formatCalendarEventPeriod(item)} · {formatCalendarEventMeta(item)}
-                </p>
-                <p className="font-medium">{item.title}</p>
-                <p className="text-sm text-[var(--text-muted)]">{item.description}</p>
-              </div>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setForm(withDefaultCalendarRepeat(item))} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
-                  수정
-                </button>
-                <button type="button" onClick={() => void onDelete(item.id)} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
-                  삭제
-                </button>
-              </div>
-            </div>
+          {sortCalendarEventsForDisplay(events).map((item) => (
+            <CalendarEventCard
+              key={item.id}
+              event={item}
+              actions={
+                <>
+                  <button type="button" onClick={() => setForm(withDefaultCalendarRepeat(item))} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
+                    수정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void onDelete(item.id)}
+                    className="rounded-full border border-rose-300 px-3 py-1 text-sm text-rose-600 dark:border-rose-500/50 dark:text-rose-300"
+                  >
+                    삭제
+                  </button>
+                </>
+              }
+            />
           ))}
         </div>
       </article>
