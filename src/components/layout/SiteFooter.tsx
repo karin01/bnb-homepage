@@ -1,22 +1,11 @@
 import { KakaoChannelQr } from "@/components/ui/KakaoChannelQr";
-import { SITE } from "@/data/site";
+import { FOOTER_STUDY_LINKS, FOOTER_UNIVERSITY_LINKS, SITE } from "@/data/site";
 import Link from "next/link";
-
-const FOOTER_LINKS = [
-  { label: "스터디 소개", href: "/about" },
-  { label: "회칙", href: "/about/rules" },
-  { label: "학습일정", href: "/academics/schedule" },
-  { label: "자료실", href: "/academics/resources" },
-  { label: "소모임", href: "/labs" },
-  { label: "신편입생 게시판", href: "/community/qa" },
-  { label: "홈페이지 가입", href: "/signup" },
-  { label: "입회 안내", href: "/join" },
-];
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-[var(--line)] bg-navy-950 text-slate-200">
-      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 md:grid-cols-3">
+      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="font-mono text-xs tracking-[0.2em] text-cyan-glow">BIT & BYTE STUDY</p>
           <p className="mt-3 text-lg font-semibold">한국방송통신대학교 컴퓨터과학과 No.1 스터디그룹</p>
@@ -25,10 +14,26 @@ export function SiteFooter() {
         <div>
           <p className="text-sm font-semibold">바로가기</p>
           <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-slate-300">
-            {FOOTER_LINKS.map((link) => (
+            {FOOTER_STUDY_LINKS.map((link) => (
               <Link key={link.href} href={link.href} className="hover:text-cyan-glow">
                 {link.label}
               </Link>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">학교</p>
+          <div className="mt-3 grid gap-2 text-sm text-slate-300">
+            {FOOTER_UNIVERSITY_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-cyan-glow"
+              >
+                {link.label}
+              </a>
             ))}
           </div>
         </div>

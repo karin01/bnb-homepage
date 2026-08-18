@@ -62,6 +62,27 @@ export const SITE = {
   },
 } as const;
 
+/** 푸터 스터디 내부 바로가기 */
+export const FOOTER_STUDY_LINKS = [
+  { label: "스터디 소개", href: "/about" },
+  { label: "회칙", href: "/about/rules" },
+  { label: "학습일정", href: "/academics/schedule" },
+  { label: "자료실", href: "/academics/resources" },
+  { label: "소모임", href: "/labs" },
+  { label: "신편입생 게시판", href: "/community/qa" },
+  { label: "홈페이지 가입", href: "/signup" },
+  { label: "입회 안내", href: "/join" },
+] as const;
+
+/** 푸터 학교·학과 외부 바로가기. 새 탭에서 엽니다. */
+export const FOOTER_UNIVERSITY_LINKS = [
+  { label: "방송대 홈페이지", href: "https://www.knou.ac.kr/" },
+  { label: "컴퓨터과학과", href: "https://cs.knou.ac.kr/cs1/index.do" },
+  { label: "개인학사정보", href: "https://ep.knou.ac.kr/main.do" },
+  { label: "서울지역대학", href: "https://seoul.knou.ac.kr/" },
+  { label: "중앙도서관", href: "https://library.knou.ac.kr/" },
+] as const;
+
 /** 카카오맵에 등록된 아지트 장소 페이지 */
 export function getKakaoMapUrl() {
   return `https://map.kakao.com/?itemId=${SITE.map.kakaoPlaceId}`;
