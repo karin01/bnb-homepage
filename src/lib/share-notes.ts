@@ -39,6 +39,7 @@ function toIsoDate(value: unknown) {
 
 function toShareNote(id: string, data: Record<string, unknown>): ShareNoteItem | null {
   const room = parseShareNoteRoom(data.room);
+  const subject = String(data.subject ?? "").trim();
   const title = String(data.title ?? "").trim();
   const body = String(data.body ?? "");
   const tags = Array.isArray(data.tags)
@@ -59,6 +60,7 @@ function toShareNote(id: string, data: Record<string, unknown>): ShareNoteItem |
   return {
     id,
     room,
+    subject,
     title,
     body,
     tags,
@@ -74,6 +76,7 @@ function toShareNote(id: string, data: Record<string, unknown>): ShareNoteItem |
 
 export function validateShareNoteInput(input: {
   room: ArchiveRoomId;
+  subject: string;
   title: string;
   body: string;
   tags: string;
@@ -82,6 +85,9 @@ export function validateShareNoteInput(input: {
 }, file: File | null, hasExistingFile = false) {
   if (!parseArchiveRoomId(toArchiveRoomField(input.room))) {
     return "자료실 방을 확인해 주세요.";
+  }
+  if (!input.subject.trim() || input.subject.trim().length > 80) {
+    return "과목을 선택해 주세요. 목록에 없으면 운영진이 학습일정에서 등록합니다.";
   }
   if (!input.title.trim() || input.title.trim().length > 80) {
     return "제목은 1~80자로 입력해 주세요.";
@@ -148,6 +154,7 @@ export function filterShareNotes(notes: ShareNoteItem[], keyword: string, room?:
   return scoped.filter((note) => {
     const titleHit =
       note.title.toLowerCase().includes(haystack) ||
+      note.subject.toLowerCase().includes(haystack) ||
       note.fileName.toLowerCase().includes(haystack) ||
       note.body.toLowerCase().includes(haystack);
     const tagHit =
@@ -167,6 +174,7 @@ export async function getShareNoteDownloadUrl(storagePath: string) {
 
 export async function saveShareNote(input: {
   room: ArchiveRoomId;
+  subject: string;
   title: string;
   body: string;
   tags: string;
@@ -189,6 +197,7 @@ export async function saveShareNote(input: {
   await setDoc(doc(getFirebaseDb(), SHARE_NOTE_COLLECTION, noteId), {
     id: noteId,
     room: toArchiveRoomField(input.room),
+    subject: input.subject.trim(),
     title: input.title.trim(),
     body: input.body.slice(0, SHARE_NOTE_MAX_BODY_LENGTH),
     tags: parseShareNoteTags(input.tags),
@@ -205,10 +214,11 @@ export async function saveShareNote(input: {
   return noteId;
 }
 
-export async function updateShareNoteContent(item: ShareNoteItem, input: { title: string; body: string; tags: string }) {
+export async function updateShareNoteContent(item: ShareNoteItem, input: { title: string; body: string; tags: string; subject: string }) {
   const errorMessage = validateShareNoteInput(
     {
       room: item.room,
+      subject: input.subject,
       title: input.title,
       body: input.body,
       tags: input.tags,
@@ -226,6 +236,7 @@ export async function updateShareNoteContent(item: ShareNoteItem, input: { title
     title: input.title.trim(),
     body: input.body.slice(0, SHARE_NOTE_MAX_BODY_LENGTH),
     tags: parseShareNoteTags(input.tags),
+    subject: input.subject.trim(),
     updatedAt: serverTimestamp(),
   });
 }

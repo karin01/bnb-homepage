@@ -38,6 +38,7 @@ export const SHARE_NOTE_EXTENSIONS = [
 export type ShareNoteItem = {
   id: string;
   room: ArchiveRoomId;
+  subject: string;
   title: string;
   body: string;
   tags: string[];
@@ -88,6 +89,10 @@ export function isShareNotePdf(fileName: string) {
 
 export function isShareNoteAudio(fileName: string) {
   return shareNoteExtension(fileName) === "mp3";
+}
+
+export function formatShareNoteSubject(subject: string) {
+  return subject.trim() || "과목 미지정";
 }
 
 export function formatShareNoteDate(isoDate: string) {

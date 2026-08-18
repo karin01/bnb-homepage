@@ -1,12 +1,13 @@
 "use client";
 
-import { GRADE_ROOMS, RESOURCE_KINDS, RESOURCE_SEMESTERS, formatFileSize, subjectsForGrade, type ResourceItem } from "@/data/resources";
+import { GRADE_ROOMS, RESOURCE_KINDS, RESOURCE_SEMESTERS, formatFileSize, type ResourceItem } from "@/data/resources";
 import { toDateString } from "@/data/schedule";
+import { useRegisteredSubjects } from "@/hooks/useRegisteredSubjects";
 import { useResources } from "@/hooks/useResources";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { removeResource, saveResource, validateResourceInput } from "@/lib/resources";
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type ResourceForm = {
   id: string;
@@ -27,7 +28,7 @@ const EMPTY_FORM: ResourceForm = {
   id: "",
   grade: 1,
   title: "",
-  subject: subjectsForGrade(1)[0] ?? "",
+  subject: "",
   year: new Date().getFullYear(),
   semester: "2",
   kind: "실습",
@@ -44,8 +45,15 @@ export default function AdminResourcesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { names: subjectNames, isLoading: subjectsLoading } = useRegisteredSubjects(form.grade);
+  const subjectOptions = form.subject && !subjectNames.includes(form.subject) ? [form.subject, ...subjectNames] : subjectNames;
 
-  const subjects = useMemo(() => subjectsForGrade(form.grade), [form.grade]);
+  useEffect(() => {
+    if (form.subject || subjectNames.length === 0) {
+      return;
+    }
+    setForm((current) => (current.subject ? current : { ...current, subject: subjectNames[0] ?? "" }));
+  }, [form.subject, subjectNames]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -93,7 +101,11 @@ export default function AdminResourcesPage() {
       <div>
         <h1 className="text-2xl font-semibold">자료실 관리</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          기존 그누보드 목록은 가져오지 않습니다. 운영진이 올린 파일은 1~4학년 운영진 자료에 나갑니다. 학우 쉐어노트는{" "}
+          기존 그누보드 목록은 가져오지 않습니다. 운영진이 올린 파일은 1~4학년 운영진 자료에 나갑니다. 과목은{" "}
+          <Link href="/admin/schedule" className="font-semibold text-cyan-700 dark:text-cyan-glow">
+            수업 시간표
+          </Link>
+          에 등록한 목록을 고릅니다. 학우 쉐어노트는{" "}
           <Link href="/admin/share-notes" className="font-semibold text-cyan-700 dark:text-cyan-glow">
             쉐어노트 관리
           </Link>
@@ -109,11 +121,10 @@ export default function AdminResourcesPage() {
             value={form.grade}
             onChange={(event) => {
               const nextGrade = Number(event.target.value) as 1 | 2 | 3 | 4;
-              const nextSubjects = subjectsForGrade(nextGrade);
               setForm({
                 ...form,
                 grade: nextGrade,
-                subject: nextSubjects.includes(form.subject) ? form.subject : (nextSubjects[0] ?? ""),
+                subject: "",
               });
             }}
             className="rounded-xl border border-[var(--line)] bg-transparent px-3 py-2"
@@ -131,8 +142,10 @@ export default function AdminResourcesPage() {
             value={form.subject}
             onChange={(event) => setForm({ ...form, subject: event.target.value })}
             className="rounded-xl border border-[var(--line)] bg-transparent px-3 py-2"
+            disabled={subjectsLoading}
           >
-            {subjects.map((subject) => (
+            <option value="">{subjectsLoading ? "과목을 불러오는 중..." : "과목을 선택하세요"}</option>
+            {subjectOptions.map((subject) => (
               <option key={subject} value={subject}>
                 {subject}
               </option>

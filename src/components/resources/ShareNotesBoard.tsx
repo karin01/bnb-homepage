@@ -1,11 +1,13 @@
 "use client";
 
-import { archiveRoomLabel, shareNotePath, toArchiveRoomField, type ArchiveRoomId } from "@/data/resources";
+import { archiveRoomLabel, parseArchiveRoomId, shareNotePath, toArchiveRoomField, type ArchiveRoomId } from "@/data/resources";
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { SubjectSelectField } from "@/components/resources/SubjectSelectField";
 import {
   SHARE_NOTE_MAX_BODY_LENGTH,
   formatFileSize,
   formatShareNoteDate,
+  formatShareNoteSubject,
   isShareNoteAudio,
   isShareNoteImage,
   isShareNotePdf,
@@ -17,6 +19,8 @@ import { filterShareNotes, saveShareNote, validateShareNoteInput } from "@/lib/s
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
+
+const WRITE_ROOMS: ArchiveRoomId[] = [1, 2, 3, 4, "club"];
 
 function noteKindLabel(item: ShareNoteItem) {
   if (isShareNotePdf(item.fileName)) {
@@ -34,10 +38,12 @@ function noteKindLabel(item: ShareNoteItem) {
 /** 게시판 목록처럼 제목을 누르면 글이 열리고, 공부 기능은 그 안에서 씁니다. */
 export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
   const router = useRouter();
-  const { membership, uid, memberName } = useMembership();
+  const { membership, uid, memberName, status } = useMembership();
   const { notes, isLoading, errorMessage, reload } = useShareNotes();
   const [keyword, setKeyword] = useState("");
   const [showWriter, setShowWriter] = useState(false);
+  const [pickedRoom, setPickedRoom] = useState<ArchiveRoomId | "">("");
+  const [subject, setSubject] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [tags, setTags] = useState("");
@@ -50,9 +56,12 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
     [notes, room],
   );
   const filtered = useMemo(() => filterShareNotes(notes, keyword, room), [keyword, notes, room]);
-  const canUpload = Boolean(room) && membership === "member";
+  const writeRoom = room ?? (pickedRoom === "" ? undefined : pickedRoom);
+  const canUpload = membership === "member";
 
   const resetForm = () => {
+    setPickedRoom("");
+    setSubject("");
     setTitle("");
     setBody("");
     setTags("");
@@ -61,8 +70,8 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!room) {
-      setFormError("자료실 방을 먼저 골라 주세요.");
+    if (!writeRoom) {
+      setFormError("자료를 올릴 학년(또는 소모임) 방을 먼저 골라 주세요.");
       return;
     }
     if (!canUpload) {
@@ -71,7 +80,8 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
     }
 
     const payload = {
-      room,
+      room: writeRoom,
+      subject,
       title,
       body,
       tags,
@@ -94,7 +104,7 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
       await reload();
       resetForm();
       setShowWriter(false);
-      router.push(shareNotePath(room, noteId));
+      router.push(shareNotePath(writeRoom, noteId));
     } catch (error) {
       setFormError(toKoreanFirebaseError(error, "노트를 올리지 못했습니다."));
     } finally {
@@ -109,7 +119,7 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-[var(--text-muted)]">제목을 누르면 공부하기·다운로드·정리·퀴즈가 있는 글로 들어갑니다.</p>
-        {canUpload ? (
+        {status === "ready" && canUpload ? (
           <button
             type="button"
             onClick={() => setShowWriter((current) => !current)}
@@ -117,18 +127,40 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
           >
             {showWriter ? "쓰기 닫기" : "노트 쓰기"}
           </button>
-        ) : (
+        ) : null}
+        {status === "ready" && !canUpload ? (
           <Link href="/login" className="text-sm font-medium text-cyan-700 dark:text-cyan-glow">
             로그인 후 글쓰기
           </Link>
-        )}
+        ) : null}
       </div>
 
       {showWriter && canUpload ? (
         <form onSubmit={onSubmit} className="glass-card grid gap-3 rounded-3xl p-5 md:grid-cols-2">
           <p className="md:col-span-2 text-sm text-[var(--text-muted)]">
-            {room ? archiveRoomLabel(room) : "자료실"} 방에 제목, 본문, 태그를 붙여 올립니다. 작성자는 로그인한 이름으로 남고, 본인 또는 운영진만 고치거나 지울 수 있습니다.
+            {writeRoom ? archiveRoomLabel(writeRoom) : "자료실"} 방에 과목, 제목, 본문, 태그를 붙여 올립니다. 작성자는 로그인한 이름으로 남고, 본인 또는 운영진만 고치거나 지울 수 있습니다.
           </p>
+          {!room ? (
+            <label className="grid gap-1 text-sm md:col-span-2">
+              올릴 방
+              <select
+                value={pickedRoom === "" ? "" : String(pickedRoom)}
+                onChange={(event) => {
+                  setPickedRoom(parseArchiveRoomId(event.target.value) ?? "");
+                  setSubject("");
+                }}
+                className="rounded-xl border border-[var(--line)] bg-transparent px-3 py-2"
+              >
+                <option value="">학년 또는 소모임을 선택하세요</option>
+                {WRITE_ROOMS.map((item) => (
+                  <option key={String(item)} value={item}>
+                    {archiveRoomLabel(item)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <SubjectSelectField room={writeRoom} value={subject} onChange={setSubject} />
           <label className="grid gap-1 text-sm md:col-span-2">
             제목
             <input
@@ -184,7 +216,7 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
         <input
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
-          placeholder="태그, 제목 검색. 예: C언어, 소모임"
+          placeholder="과목, 태그, 제목 검색. 예: C언어, 소모임"
           className="flex-1 rounded-full border border-[var(--line)] bg-transparent px-4 py-2 text-sm"
         />
         <p className="self-center text-sm text-[var(--text-muted)]">
@@ -211,7 +243,7 @@ export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
               <div>
                 <p className="text-xs text-cyan-700 dark:text-cyan-glow">
                   {!room ? `${archiveRoomLabel(item.room)} · ` : ""}
-                  {noteKindLabel(item)} · {item.tags.join(" · ")}
+                  {formatShareNoteSubject(item.subject)} · {noteKindLabel(item)} · {item.tags.join(" · ")}
                 </p>
                 <h2 className="mt-1 font-medium">{item.title}</h2>
                 {item.body.trim() ? (

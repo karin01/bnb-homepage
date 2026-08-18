@@ -370,7 +370,7 @@ service cloud.firestore {
     }
 
     match /subjects/{subjectId} {
-      allow read: if isAdmin() || resource.data.grade == 'club';
+      allow read: if true;
 
       allow create, update: if isAdmin()
         && isValidSubject(request.resource.data, subjectId)
@@ -444,7 +444,7 @@ service cloud.firestore {
     }
 
     function shareNoteFields() {
-      return ['id', 'room', 'title', 'body', 'tags', 'uploaderUid', 'uploaderName', 'fileName', 'storagePath', 'fileSize', 'contentType', 'createdAt', 'updatedAt'];
+      return ['id', 'room', 'subject', 'title', 'body', 'tags', 'uploaderUid', 'uploaderName', 'fileName', 'storagePath', 'fileSize', 'contentType', 'createdAt', 'updatedAt'];
     }
 
     function isValidShareNote(data, noteId) {
@@ -453,6 +453,7 @@ service cloud.firestore {
         && data.id == noteId
         && validStringLength('id', 1, 40)
         && data.room in ['1', '2', '3', '4', 'club']
+        && validStringLength('subject', 1, 80)
         && validStringLength('title', 1, 80)
         && data.body is string
         && data.body.size() <= 8000
@@ -483,8 +484,9 @@ service cloud.firestore {
         && (isAdmin() || canAccessRole('site'));
 
       allow update: if (isAdmin() || isOwner(resource.data.uploaderUid))
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'tags', 'updatedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'tags', 'subject', 'updatedAt'])
         && validStringLength('title', 1, 80)
+        && validStringLength('subject', 1, 80)
         && request.resource.data.body is string
         && request.resource.data.body.size() <= 8000
         && isValidShareNoteTags(request.resource.data.tags)

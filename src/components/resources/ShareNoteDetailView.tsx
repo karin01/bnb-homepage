@@ -1,6 +1,7 @@
 "use client";
 
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { SubjectSelectField } from "@/components/resources/SubjectSelectField";
 import { PageHero } from "@/components/ui/PageHero";
 import { ZoomableImageList } from "@/components/ui/ZoomableImageList";
 import { parseArchiveRoomId, resourceBoardPath } from "@/data/resources";
@@ -8,6 +9,7 @@ import {
   SHARE_NOTE_MAX_BODY_LENGTH,
   formatFileSize,
   formatShareNoteDate,
+  formatShareNoteSubject,
   isShareNoteAudio,
   isShareNoteImage,
   isShareNotePdf,
@@ -35,6 +37,7 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
   const [studyText, setStudyText] = useState("");
   const [studyBusy, setStudyBusy] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [editSubject, setEditSubject] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editTags, setEditTags] = useState("");
@@ -50,6 +53,7 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
         }
         setNote(nextNote);
         if (nextNote) {
+          setEditSubject(nextNote.subject);
           setEditTitle(nextNote.title);
           setEditBody(nextNote.body);
           setEditTags(nextNote.tags.join(", "));
@@ -145,10 +149,11 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
     setErrorMessage("");
     setIsSavingEdit(true);
     try {
-      await updateShareNoteContent(note, { title: editTitle, body: editBody, tags: editTags });
+      await updateShareNoteContent(note, { title: editTitle, body: editBody, tags: editTags, subject: editSubject });
       const nextNote = await readShareNote(note.id);
       if (nextNote) {
         setNote(nextNote);
+        setEditSubject(nextNote.subject);
         setEditTitle(nextNote.title);
         setEditBody(nextNote.body);
         setEditTags(nextNote.tags.join(", "));
@@ -198,7 +203,7 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
         compact
         eyebrow="쉐어노트"
         title={note.title}
-        description={`${note.uploaderName} · ${formatShareNoteDate(note.createdAt)} · ${note.tags.join(" · ")}`}
+        description={`${formatShareNoteSubject(note.subject)} · ${note.uploaderName} · ${formatShareNoteDate(note.createdAt)} · ${note.tags.join(" · ")}`}
       />
       <article className="mx-auto max-w-4xl px-5 py-10">
         <Link href={listPath} className="text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
@@ -208,6 +213,7 @@ export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: st
 
         {isEditing ? (
           <div className="mt-6 grid gap-3">
+            <SubjectSelectField room={note.room} value={editSubject} onChange={setEditSubject} />
             <label className="grid gap-1 text-sm">
               제목
               <input

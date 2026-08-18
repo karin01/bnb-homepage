@@ -86,7 +86,7 @@ export default function AdminHomePage() {
             게시판 관리
           </Link>
           <Link href="/admin/schedule" className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
-            수업 시간표 수정
+            수업 시간표·과목 수정
           </Link>
           <Link href="/admin/labs" className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
             소모임 관리

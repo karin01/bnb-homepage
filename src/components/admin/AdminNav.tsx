@@ -8,7 +8,7 @@ const ADMIN_LINKS = [
   { href: "/admin", label: "한눈에 보기" },
   { href: "/admin/members", label: "회원 관리" },
   { href: "/admin/boards", label: "게시판 관리" },
-  { href: "/admin/schedule", label: "수업 시간표" },
+  { href: "/admin/schedule", label: "시간표·과목" },
   { href: "/admin/labs", label: "소모임 관리" },
   { href: "/admin/calendar", label: "학사 일정" },
   { href: "/admin/resources", label: "자료실" },

@@ -92,7 +92,7 @@ export default function AdminLabsPage() {
       <div>
         <h1 className="text-2xl font-semibold">소모임 관리</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          여기서 소모임 소개를 만들고, 일정은 수업 시간표에서 분류를 `소모임`으로 고르면 같은 이름으로 연결됩니다.
+          여기서 소모임 소개를 만들고, 일정은 수업 시간표에서 분류를 `소모임`으로 고르면 같은 이름으로 연결됩니다. 소모임 자료실에 노트를 올릴 때도 이 이름 목록에서 고릅니다.
         </p>
       </div>
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}

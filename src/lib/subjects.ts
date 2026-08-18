@@ -89,11 +89,15 @@ function mergeSubjects(fromServer: RegisteredSubject[]) {
 }
 
 export async function listRegisteredSubjects() {
-  const snapshot = await getDocs(collection(getFirebaseDb(), SUBJECT_COLLECTION));
-  const fromServer = snapshot.docs
-    .map((item) => toSubject(item.id, item.data() as Record<string, unknown>))
-    .filter((item): item is RegisteredSubject => item !== null);
-  return mergeSubjects(fromServer);
+  try {
+    const snapshot = await getDocs(collection(getFirebaseDb(), SUBJECT_COLLECTION));
+    const fromServer = snapshot.docs
+      .map((item) => toSubject(item.id, item.data() as Record<string, unknown>))
+      .filter((item): item is RegisteredSubject => item !== null);
+    return mergeSubjects(fromServer);
+  } catch {
+    return sortSubjectsByGrade(REGISTERED_SUBJECTS).filter((subject) => !subject.hidden);
+  }
 }
 
 export async function listClubSubjects() {

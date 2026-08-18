@@ -281,7 +281,7 @@ export default function AdminSchedulePage() {
       <div>
         <h1 className="text-2xl font-semibold">수업 시간표</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          과목을 먼저 등록한 뒤 시간표에 넣습니다. 반복 주기와 시작일~종료일을 함께 저장하면, 학기 동안 같은 강의를 날짜마다 다시 올리지 않아도 됩니다.
+          과목을 먼저 등록한 뒤 시간표에 넣습니다. 여기서 등록한 과목은 자료실(쉐어노트·운영진 자료) 업로드에서도 같은 목록으로 고릅니다. 반복 주기와 시작일~종료일을 함께 저장하면, 학기 동안 같은 강의를 날짜마다 다시 올리지 않아도 됩니다.
         </p>
       </div>
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
@@ -289,7 +289,7 @@ export default function AdminSchedulePage() {
       <article className="glass-card rounded-3xl p-5">
         <h2 className="font-semibold">과목 등록</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          학년과 과목명을 넣고 등록하면, 아래 시간표의 과목명 선택칸에 바로 나타납니다. 이미 있는 과목은 과목명 옆에서 수정하거나 삭제하세요. 소모임 소개 글은{" "}
+          학년과 과목명을 넣고 등록하면, 아래 시간표와 자료실 과목 선택칸에 바로 나타납니다. 이미 있는 과목은 과목명 옆에서 수정하거나 삭제하세요. 소모임 소개 글은{" "}
           <a href="/admin/labs" className="underline">
             소모임 관리
           </a>

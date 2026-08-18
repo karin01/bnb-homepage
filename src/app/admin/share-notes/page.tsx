@@ -1,7 +1,7 @@
 "use client";
 
 import { archiveRoomLabel } from "@/data/resources";
-import { formatFileSize, formatShareNoteDate, type ShareNoteItem } from "@/data/share-notes";
+import { formatFileSize, formatShareNoteDate, formatShareNoteSubject, type ShareNoteItem } from "@/data/share-notes";
 import { useShareNotes } from "@/hooks/useShareNotes";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { removeShareNote } from "@/lib/share-notes";
@@ -46,7 +46,7 @@ export default function AdminShareNotesPage() {
               <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-[var(--line)] px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                    {archiveRoomLabel(item.room)} · {item.tags.join(" · ")}
+                    {archiveRoomLabel(item.room)} · {formatShareNoteSubject(item.subject)} · {item.tags.join(" · ")}
                   </p>
                   <p className="font-medium">{item.title}</p>
                   <p className="text-sm text-[var(--text-muted)]">
