@@ -81,6 +81,7 @@ export const FOOTER_UNIVERSITY_LINKS = [
   { label: "개인학사정보", href: "https://ep.knou.ac.kr/main.do" },
   { label: "서울지역대학", href: "https://seoul.knou.ac.kr/" },
   { label: "중앙도서관", href: "https://library.knou.ac.kr/" },
+  { label: "Q넷", href: "https://www.q-net.or.kr/" },
 ] as const;
 
 /** 카카오맵에 등록된 아지트 장소 페이지 */
