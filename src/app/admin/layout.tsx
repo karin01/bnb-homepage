@@ -9,7 +9,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminGuard>
         <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
           <AdminNav />
-          <div>{children}</div>
+          <div className="min-w-0">{children}</div>
         </div>
       </AdminGuard>
     </section>

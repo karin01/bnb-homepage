@@ -33,6 +33,9 @@ const EMPTY_FORM: BoardConfig = {
   hidden: false,
 };
 
+/** 표 안 입력칸 높이를 한 줄로 맞춰, 칸마다 들쑥날쑥하지 않게 합니다. */
+const TABLE_CONTROL = "h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--bg-elevated)] px-2 text-sm";
+
 export default function AdminBoardsPage() {
   return (
     <Suspense fallback={<p className="text-sm text-[var(--text-muted)]">게시판을 불러오는 중입니다.</p>}>
@@ -92,6 +95,14 @@ function AdminBoardsList() {
     if (!needle) return drafts;
     return drafts.filter((board) => `${board.id} ${board.title} ${board.group}`.toLowerCase().includes(needle));
   }, [drafts, keyword]);
+  const visibleIds = visibleBoards.map((board) => board.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((current) =>
+      allVisibleSelected ? current.filter((id) => !visibleIds.includes(id)) : [...new Set([...current, ...visibleIds])],
+    );
+  };
 
   const updateDraft = (boardId: string, patch: Partial<BoardConfig>) => {
     setDrafts((current) => current.map((board) => (board.id === boardId ? { ...board, ...patch } : board)));
@@ -284,24 +295,29 @@ function AdminBoardsList() {
       {isLoading ? <p className="text-sm text-[var(--text-muted)]">게시판 목록을 불러오는 중입니다.</p> : null}
 
       <div className="overflow-x-auto rounded-3xl border border-[var(--line)]">
-        <table className="min-w-full text-left text-sm">
+        <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
           <thead className="bg-black/5 text-xs text-[var(--text-muted)] dark:bg-white/5">
-            <tr>
-              <th className="px-3 py-3">선택</th>
-              <th className="px-3 py-3">그룹</th>
-              <th className="px-3 py-3">ID</th>
-              <th className="px-3 py-3">제목</th>
-              <th className="px-3 py-3">스킨</th>
-              <th className="px-3 py-3">읽기/쓰기</th>
-              <th className="px-3 py-3">순서</th>
-              <th className="px-3 py-3">댓글/검색/숨김</th>
-              <th className="px-3 py-3">관리</th>
+            <tr className="border-b border-[var(--line)]">
+              <th className="w-10 px-3 py-2.5 align-middle">
+                <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} aria-label="보이는 게시판 모두 선택" />
+              </th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap">그룹</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap">ID</th>
+              <th className="min-w-[10rem] px-2 py-2.5 align-middle">제목</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap">스킨</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap">읽기</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap">쓰기</th>
+              <th className="w-16 px-2 py-2.5 align-middle whitespace-nowrap">순서</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap text-center">댓글</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap text-center">검색</th>
+              <th className="px-2 py-2.5 align-middle whitespace-nowrap text-center">숨김</th>
+              <th className="px-3 py-2.5 align-middle whitespace-nowrap">관리</th>
             </tr>
           </thead>
           <tbody>
             {visibleBoards.map((board) => (
-              <tr key={board.id} className="border-t border-[var(--line)]">
-                <td className="px-3 py-3">
+              <tr key={board.id} className="border-b border-[var(--line)] last:border-b-0 hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
+                <td className="px-3 py-2 align-middle">
                   <input
                     type="checkbox"
                     checked={selectedIds.includes(board.id)}
@@ -311,8 +327,8 @@ function AdminBoardsList() {
                     aria-label={`${board.title} 선택`}
                   />
                 </td>
-                <td className="px-3 py-3">
-                  <select value={board.group} onChange={(event) => updateDraft(board.id, { group: event.target.value as BoardConfig["group"] })} className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1">
+                <td className="px-2 py-2 align-middle">
+                  <select value={board.group} onChange={(event) => updateDraft(board.id, { group: event.target.value as BoardConfig["group"] })} className={`${TABLE_CONTROL} min-w-[6.5rem]`}>
                     {BOARD_GROUPS.map((group) => (
                       <option key={group} value={group}>
                         {group}
@@ -320,12 +336,12 @@ function AdminBoardsList() {
                     ))}
                   </select>
                 </td>
-                <td className="px-3 py-3 font-mono text-xs">{board.id}</td>
-                <td className="px-3 py-3">
-                  <input value={board.title} onChange={(event) => updateDraft(board.id, { title: event.target.value })} className="w-36 rounded-xl border border-[var(--line)] bg-transparent px-2 py-1" />
+                <td className="px-2 py-2 align-middle whitespace-nowrap font-mono text-xs text-[var(--text-muted)]">{board.id}</td>
+                <td className="px-2 py-2 align-middle">
+                  <input value={board.title} onChange={(event) => updateDraft(board.id, { title: event.target.value })} className={`${TABLE_CONTROL} min-w-[10rem]`} />
                 </td>
-                <td className="px-3 py-3">
-                  <select value={board.skin} onChange={(event) => updateDraft(board.id, { skin: event.target.value as BoardConfig["skin"] })} className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1">
+                <td className="px-2 py-2 align-middle">
+                  <select value={board.skin} onChange={(event) => updateDraft(board.id, { skin: event.target.value as BoardConfig["skin"] })} className={`${TABLE_CONTROL} min-w-[5.5rem]`}>
                     {BOARD_SKINS.map((skin) => (
                       <option key={skin} value={skin}>
                         {BOARD_SKIN_LABELS[skin]}
@@ -333,52 +349,47 @@ function AdminBoardsList() {
                     ))}
                   </select>
                 </td>
-                <td className="px-3 py-3">
-                  <div className="grid gap-1">
-                    <select value={board.readRole} onChange={(event) => updateDraft(board.id, { readRole: event.target.value as BoardConfig["readRole"] })} className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1">
-                      {BOARD_READ_ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          읽기 {BOARD_READ_ROLE_LABELS[role]}
-                        </option>
-                      ))}
-                    </select>
-                    <select value={board.writeRole} onChange={(event) => updateDraft(board.id, { writeRole: event.target.value as BoardConfig["writeRole"] })} className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1">
-                      {BOARD_WRITE_ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          쓰기 {BOARD_WRITE_ROLE_LABELS[role]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <td className="px-2 py-2 align-middle">
+                  <select value={board.readRole} onChange={(event) => updateDraft(board.id, { readRole: event.target.value as BoardConfig["readRole"] })} className={`${TABLE_CONTROL} min-w-[5.5rem]`}>
+                    {BOARD_READ_ROLES.map((role) => (
+                      <option key={role} value={role}>
+                        {BOARD_READ_ROLE_LABELS[role]}
+                      </option>
+                    ))}
+                  </select>
                 </td>
-                <td className="px-3 py-3">
-                  <input type="number" min={1} max={999} value={board.order} onChange={(event) => updateDraft(board.id, { order: Number(event.target.value) })} className="w-20 rounded-xl border border-[var(--line)] bg-transparent px-2 py-1" />
+                <td className="px-2 py-2 align-middle">
+                  <select value={board.writeRole} onChange={(event) => updateDraft(board.id, { writeRole: event.target.value as BoardConfig["writeRole"] })} className={`${TABLE_CONTROL} min-w-[5.5rem]`}>
+                    {BOARD_WRITE_ROLES.map((role) => (
+                      <option key={role} value={role}>
+                        {BOARD_WRITE_ROLE_LABELS[role]}
+                      </option>
+                    ))}
+                  </select>
                 </td>
-                <td className="px-3 py-3">
-                  <div className="grid gap-1 text-xs">
-                    <label className="flex items-center gap-1">
-                      <input type="checkbox" checked={board.commentEnabled} onChange={(event) => updateDraft(board.id, { commentEnabled: event.target.checked })} />
-                      댓글
-                    </label>
-                    <label className="flex items-center gap-1">
-                      <input type="checkbox" checked={board.searchEnabled} onChange={(event) => updateDraft(board.id, { searchEnabled: event.target.checked })} />
-                      검색
-                    </label>
-                    <label className="flex items-center gap-1">
-                      <input type="checkbox" checked={board.hidden} onChange={(event) => updateDraft(board.id, { hidden: event.target.checked })} />
-                      숨김
-                    </label>
-                  </div>
+                <td className="px-2 py-2 align-middle">
+                  <input type="number" min={1} max={999} value={board.order} onChange={(event) => updateDraft(board.id, { order: Number(event.target.value) })} className={`${TABLE_CONTROL} w-16 text-center`} />
                 </td>
-                <td className="px-3 py-3">
-                  <div className="flex flex-col gap-1">
-                    <Link href={adminBoardPostsPath(board.id)} className="rounded-full bg-cyan-500 px-3 py-1 text-center text-xs font-semibold text-navy-950">
+                <td className="px-2 py-2 align-middle text-center">
+                  <input type="checkbox" checked={board.commentEnabled} onChange={(event) => updateDraft(board.id, { commentEnabled: event.target.checked })} aria-label={`${board.title} 댓글`} />
+                </td>
+                <td className="px-2 py-2 align-middle text-center">
+                  <input type="checkbox" checked={board.searchEnabled} onChange={(event) => updateDraft(board.id, { searchEnabled: event.target.checked })} aria-label={`${board.title} 검색`} />
+                </td>
+                <td className="px-2 py-2 align-middle text-center">
+                  <input type="checkbox" checked={board.hidden} onChange={(event) => updateDraft(board.id, { hidden: event.target.checked })} aria-label={`${board.title} 숨김`} />
+                </td>
+                <td className="px-3 py-2 align-middle whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <Link href={adminBoardPostsPath(board.id)} className="text-xs font-semibold text-cyan-800 dark:text-cyan-glow">
                       글 관리
                     </Link>
-                    <Link href={boardPublicPath(board.id)} className="rounded-full bg-cyan-500/15 px-3 py-1 text-center text-xs font-medium text-cyan-800 dark:text-cyan-glow">
+                    <span className="text-[var(--text-muted)]">|</span>
+                    <Link href={boardPublicPath(board.id)} className="text-xs text-[var(--text-muted)]">
                       보기
                     </Link>
-                    <button type="button" onClick={() => void onDeleteOne(board)} className="rounded-full border border-[var(--line)] px-3 py-1 text-xs">
+                    <span className="text-[var(--text-muted)]">|</span>
+                    <button type="button" onClick={() => void onDeleteOne(board)} className="text-xs text-red-500">
                       삭제
                     </button>
                   </div>
