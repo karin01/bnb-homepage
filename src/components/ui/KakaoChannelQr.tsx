@@ -57,7 +57,6 @@ export function KakaoChannelQr({ variant = "section" }: KakaoChannelQrProps) {
         {qrImage}
         <div className="text-sm leading-6 text-slate-300">
           <p className="font-semibold text-slate-100">카카오채널 QR</p>
-          <p className="mt-1 text-slate-400">휴대폰 카메라로 찍으면 채널이 열립니다.</p>
           {actions}
         </div>
       </div>
