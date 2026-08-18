@@ -3,13 +3,15 @@
 import {
   CALENDAR_CAMPUSES,
   CALENDAR_EVENT_CATEGORIES,
+  CALENDAR_MEETING_MODES,
   CALENDAR_REPEAT_CYCLES,
   CALENDAR_REPEAT_HINTS,
   SEMESTER_END_DATE,
   SEMESTER_START_DATE,
-  calendarCampusLabel,
+  formatCalendarEventMeta,
   formatCalendarEventPeriod,
   parseCalendarCampus,
+  parseCalendarMeetingMode,
   parseCalendarRepeatCycle,
   withDefaultCalendarRepeat,
   type CalendarEvent,
@@ -29,6 +31,7 @@ const EMPTY_FORM: CalendarEvent = {
   description: "",
   repeatCycle: "하루",
   campus: "seongsu",
+  meetingMode: "inPerson",
 };
 
 export default function AdminCalendarPage() {
@@ -158,36 +161,58 @@ export default function AdminCalendarPage() {
                 </option>
               ))}
             </select>
-            <span className="text-xs text-[var(--text-muted)]">대면은 학습관을 고르고, 과제 마감처럼 어디든 같으면 공통을 고르세요.</span>
+            <span className="text-xs text-[var(--text-muted)]">과제 마감처럼 어디든 같으면 공통을 고르세요.</span>
           </label>
         </div>
         <p className="md:col-span-2 text-xs text-[var(--text-muted)]">{CALENDAR_REPEAT_HINTS[form.repeatCycle]}</p>
-        <label className="grid gap-1 text-sm">
-          시작일
-          <input
-            type="date"
-            value={form.date}
-            onChange={(event) => changeStartDate(event.target.value)}
-            className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          종료일
-          <input
-            type="date"
-            value={form.endDate}
-            onChange={(event) => setForm({ ...form, endDate: event.target.value })}
-            disabled={isSingleDay}
-            className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3 disabled:opacity-60"
-          />
-        </label>
+        <div className="grid items-start gap-3 md:col-span-2 md:grid-cols-3">
+          <label className="grid gap-1 text-sm">
+            시작일
+            <input
+              type="date"
+              value={form.date}
+              onChange={(event) => changeStartDate(event.target.value)}
+              className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            종료일
+            <input
+              type="date"
+              value={form.endDate}
+              onChange={(event) => setForm({ ...form, endDate: event.target.value })}
+              disabled={isSingleDay}
+              className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3 disabled:opacity-60"
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            대면/비대면
+            <select
+              value={form.meetingMode}
+              onChange={(event) => {
+                const nextMode = parseCalendarMeetingMode(event.target.value);
+                if (nextMode) {
+                  setForm({ ...form, meetingMode: nextMode });
+                }
+              }}
+              className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
+            >
+              {CALENDAR_MEETING_MODES.map((mode) => (
+                <option key={mode.value} value={mode.value}>
+                  {mode.label}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-[var(--text-muted)]">제목에 대면/비대면을 적지 않아도 됩니다.</span>
+          </label>
+        </div>
         <label className="grid gap-1 text-sm md:col-span-2">
           제목
           <input
             value={form.title}
             onChange={(event) => setForm({ ...form, title: event.target.value })}
             className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
-            placeholder="예: 정규 강의 개강"
+            placeholder="예: 자료구조"
           />
         </label>
         <label className="grid gap-1 text-sm md:col-span-2">
@@ -220,7 +245,7 @@ export default function AdminCalendarPage() {
             <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-[var(--line)] px-4 py-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                  {formatCalendarEventPeriod(item)} · {item.category} · {calendarCampusLabel(item.campus)}
+                  {formatCalendarEventPeriod(item)} · {formatCalendarEventMeta(item)}
                 </p>
                 <p className="font-medium">{item.title}</p>
                 <p className="text-sm text-[var(--text-muted)]">{item.description}</p>

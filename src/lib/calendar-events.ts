@@ -5,6 +5,7 @@ import {
   CALENDAR_EVENT_CATEGORIES,
   isDateString,
   parseCalendarCampus,
+  parseCalendarMeetingMode,
   parseCalendarRepeatCycle,
   withDefaultCalendarRepeat,
   type CalendarEvent,
@@ -35,6 +36,7 @@ function toCalendarEvent(id: string, data: Record<string, unknown>): CalendarEve
     description,
     repeatCycle: parseCalendarRepeatCycle(data.repeatCycle) ?? undefined,
     campus: parseCalendarCampus(data.campus) ?? undefined,
+    meetingMode: parseCalendarMeetingMode(data.meetingMode) ?? undefined,
   });
 }
 
@@ -66,6 +68,9 @@ export function validateCalendarEvent(input: CalendarEvent) {
   }
   if (!parseCalendarCampus(normalized.campus)) {
     return "대학교를 선택해 주세요.";
+  }
+  if (!parseCalendarMeetingMode(normalized.meetingMode)) {
+    return "대면/비대면을 선택해 주세요.";
   }
   if (!normalized.description.trim() || normalized.description.trim().length > 200) {
     return "설명은 1~200자로 입력해 주세요.";
@@ -115,6 +120,7 @@ export async function saveCalendarEvent(input: CalendarEvent) {
     title: normalized.title.trim(),
     category: normalized.category,
     campus: normalized.campus,
+    meetingMode: normalized.meetingMode,
     description: normalized.description.trim(),
     repeatCycle: normalized.repeatCycle,
     updatedAt: serverTimestamp(),

@@ -3,9 +3,9 @@
 import { PageHero } from "@/components/ui/PageHero";
 import { useMembership } from "@/components/providers/MembershipProvider";
 import {
-  calendarCampusLabel,
   calendarEventMatchesCampus,
   calendarEventOccursOnDate,
+  formatCalendarEventMeta,
   formatCalendarEventPeriod,
   formatLecturePeriod,
   formatLectureWhen,
@@ -178,7 +178,7 @@ export default function SchedulePage() {
                 {dayEvents.map((event) => (
                   <div key={event.id} className="rounded-2xl border border-[var(--line)] p-4">
                     <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                      {event.category} · {calendarCampusLabel(event.campus)} · {formatCalendarEventPeriod(event)}
+                      {formatCalendarEventMeta(event)} · {formatCalendarEventPeriod(event)}
                     </p>
                     <p className="mt-1 font-medium">{event.title}</p>
                     <p className="mt-2 text-sm text-[var(--text-muted)]">{event.description}</p>

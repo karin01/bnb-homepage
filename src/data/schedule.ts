@@ -365,6 +365,7 @@ export type CalendarEvent = {
   description: string;
   repeatCycle: CalendarRepeatCycle;
   campus: CalendarCampus;
+  meetingMode: CalendarMeetingMode;
 };
 
 export function isCalendarCampus(value: string): value is CalendarCampus {
@@ -377,6 +378,27 @@ export function parseCalendarCampus(value: unknown): CalendarCampus | null {
 
 export function calendarCampusLabel(campus: CalendarCampus | string | undefined) {
   return CALENDAR_CAMPUSES.find((item) => item.value === campus)?.label ?? "공통";
+}
+
+/** 수업이 학습관에 모이는지, 온라인인지. 과제 마감처럼 해당 없으면 해당없음을 씁니다. */
+export const CALENDAR_MEETING_MODES = [
+  { value: "inPerson", label: "대면" },
+  { value: "online", label: "비대면" },
+  { value: "none", label: "해당없음" },
+] as const;
+
+export type CalendarMeetingMode = (typeof CALENDAR_MEETING_MODES)[number]["value"];
+
+export function isCalendarMeetingMode(value: string): value is CalendarMeetingMode {
+  return CALENDAR_MEETING_MODES.some((mode) => mode.value === value);
+}
+
+export function parseCalendarMeetingMode(value: unknown): CalendarMeetingMode | null {
+  return isCalendarMeetingMode(String(value ?? "")) ? (value as CalendarMeetingMode) : null;
+}
+
+export function calendarMeetingModeLabel(mode: CalendarMeetingMode | string | undefined) {
+  return CALENDAR_MEETING_MODES.find((item) => item.value === mode)?.label ?? "해당없음";
 }
 
 /** 달력 필터. 전체를 보면 모두 보이고, 학습관을 고르면 그곳 일정과 공통 일정을 함께 봅니다. */
@@ -395,11 +417,12 @@ export function parseCalendarRepeatCycle(value: unknown): CalendarRepeatCycle | 
   return isCalendarRepeatCycle(String(value ?? "")) ? (value as CalendarRepeatCycle) : null;
 }
 
-/** 예전 문서에 반복·대학교가 없으면, 하루/기간·공통으로 읽어 달력이 비지 않게 합니다. */
+/** 예전 문서에 반복·대학교·대면여부가 없으면, 하루/기간·공통·해당없음으로 읽습니다. */
 export function withDefaultCalendarRepeat(
-  event: Omit<CalendarEvent, "repeatCycle" | "campus"> & {
+  event: Omit<CalendarEvent, "repeatCycle" | "campus" | "meetingMode"> & {
     repeatCycle?: CalendarRepeatCycle | string;
     campus?: CalendarCampus | string;
+    meetingMode?: CalendarMeetingMode | string;
   },
 ) {
   const endDate = isDateString(event.endDate) ? event.endDate : event.date;
@@ -410,6 +433,7 @@ export function withDefaultCalendarRepeat(
     endDate: repeatCycle === "하루" ? event.date : endDate,
     repeatCycle,
     campus: parseCalendarCampus(event.campus) ?? "all",
+    meetingMode: parseCalendarMeetingMode(event.meetingMode) ?? "none",
   } satisfies CalendarEvent;
 }
 
@@ -456,6 +480,16 @@ export function formatCalendarEventPeriod(event: CalendarEvent) {
   return `${normalized.repeatCycle} ${weekdayFromDate(normalized.date)} ${normalized.date} ~ ${endDate}`;
 }
 
+/** 달력 카드 위에 보여줄 한 줄. 해당없음인 대면여부는 빼서 제목이 지저분해지지 않게 합니다. */
+export function formatCalendarEventMeta(event: CalendarEvent) {
+  const normalized = withDefaultCalendarRepeat(event);
+  const parts: string[] = [normalized.category, calendarCampusLabel(normalized.campus)];
+  if (normalized.meetingMode !== "none") {
+    parts.push(calendarMeetingModeLabel(normalized.meetingMode));
+  }
+  return parts.join(" · ");
+}
+
 export const CALENDAR_EVENT_CATEGORIES: CalendarEvent["category"][] = ["학사", "스터디", "행사"];
 
 /** 방통대 학사 + BnB 일정을 한 캘린더에서 보기 위한 샘플 */
@@ -469,6 +503,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     description: "신·편입생 대상 오픈수업 일정과 입회 안내가 시작됩니다.",
     repeatCycle: "하루",
     campus: "all",
+    meetingMode: "none",
   },
   {
     id: "e2",
@@ -479,6 +514,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     description: "혜화동 스터디룸에서 학기 오리엔테이션을 진행합니다.",
     repeatCycle: "하루",
     campus: "all",
+    meetingMode: "none",
   },
   {
     id: "e3",
@@ -489,6 +525,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     description: "학년별 분담 강의가 본격적으로 시작됩니다.",
     repeatCycle: "하루",
     campus: "all",
+    meetingMode: "none",
   },
   {
     id: "e4",
@@ -499,6 +536,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     description: "방송대 공식 출석수업 기간입니다. 스터디 시간표가 일부 조정될 수 있습니다.",
     repeatCycle: "하루",
     campus: "all",
+    meetingMode: "none",
   },
   {
     id: "e5",
@@ -509,6 +547,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     description: "학년별 과제 가이드와 첨삭 일정을 자료실에서 확인하세요.",
     repeatCycle: "하루",
     campus: "all",
+    meetingMode: "none",
   },
   {
     id: "e6",
@@ -519,5 +558,6 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     description: "기출 풀이 특강이 집중 편성됩니다.",
     repeatCycle: "하루",
     campus: "all",
+    meetingMode: "none",
   },
 ];
