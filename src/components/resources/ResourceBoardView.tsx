@@ -9,24 +9,16 @@ import { useMembership } from "@/components/providers/MembershipProvider";
 import { ARCHIVE_HUB_PATH, GRADE_ROOMS, parseArchiveRoomId } from "@/data/resources";
 import { CLUB_ARCHIVE_ROOM } from "@/data/share-notes";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 function readRoomParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : String(value ?? "");
 }
 
-function ResourceBoardViewInner() {
-  const params = useParams<{ room: string }>();
+function ResourceBoardMain({ roomValue, noteId }: { roomValue: string; noteId: string }) {
   const { isAdmin } = useMembership();
-  const roomValue = readRoomParam(params.room);
   const room = parseArchiveRoomId(roomValue);
-  const [noteId, setNoteId] = useState("");
-
-  useEffect(() => {
-    const nextNoteId = new URLSearchParams(window.location.search).get("note")?.trim() ?? "";
-    setNoteId(nextNoteId);
-  }, [roomValue]);
 
   if (noteId) {
     return <ShareNoteDetailView room={roomValue} noteId={noteId} />;
@@ -57,7 +49,7 @@ function ResourceBoardViewInner() {
             ← 자료실 전체
           </Link>
           {isAdmin ? (
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Link href="/admin/resources" className="text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
                 자료 올리기
               </Link>
@@ -89,6 +81,19 @@ function ResourceBoardViewInner() {
   );
 }
 
+function ResourceBoardWithNoteQuery({ roomValue }: { roomValue: string }) {
+  const searchParams = useSearchParams();
+  const noteId = (searchParams.get("note") ?? "").trim();
+  return <ResourceBoardMain roomValue={roomValue} noteId={noteId} />;
+}
+
 export function ResourceBoardView() {
-  return <ResourceBoardViewInner />;
+  const params = useParams<{ room: string }>();
+  const roomValue = readRoomParam(params.room);
+
+  return (
+    <Suspense fallback={<ResourceBoardMain roomValue={roomValue} noteId="" />}>
+      <ResourceBoardWithNoteQuery roomValue={roomValue} />
+    </Suspense>
+  );
 }
