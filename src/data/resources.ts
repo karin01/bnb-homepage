@@ -67,9 +67,9 @@ export function resourceBoardPath(room: ArchiveRoomId) {
   return `${ARCHIVE_HUB_PATH}/${room}`;
 }
 
-/** 쉐어노트 글 주소. 제목을 누르면 이 게시글로 들어갑니다. */
+/** 쉐어노트 글 주소. GitHub Pages는 노트마다 HTML을 미리 만들 수 없어 방 주소에 번호를 붙입니다. */
 export function shareNotePath(room: ArchiveRoomId, noteId: string) {
-  return `${resourceBoardPath(room)}/notes/${noteId}`;
+  return `${resourceBoardPath(room)}?note=${encodeURIComponent(noteId)}`;
 }
 
 export function parseArchiveRoomId(value: string): ArchiveRoomId | null {

@@ -246,6 +246,23 @@ export function boardPublicPath(boardId: string) {
   return `/community/${boardId}`;
 }
 
+/** GitHub Pages는 글마다 HTML을 미리 만들 수 없어, 목록 주소에 글 번호를 붙입니다. */
+export function boardPostPath(boardId: string, postId: string) {
+  return `${boardPublicPath(boardId)}?post=${encodeURIComponent(postId)}`;
+}
+
+export function boardWritePath(boardId: string) {
+  return `${boardPublicPath(boardId)}?write=1`;
+}
+
+export function boardEditPath(boardId: string, postId: string) {
+  return `${boardPublicPath(boardId)}?post=${encodeURIComponent(postId)}&edit=1`;
+}
+
+export function adminBoardPostsPath(boardId: string) {
+  return `/admin/boards?board=${encodeURIComponent(boardId)}`;
+}
+
 export function formatPostDate(isoDate: string) {
   if (!isoDate) return "-";
   return isoDate.slice(0, 10);

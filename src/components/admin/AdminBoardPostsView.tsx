@@ -5,7 +5,7 @@ import {
   BOARD_READ_ROLE_LABELS,
   BOARD_WRITE_ROLES,
   BOARD_WRITE_ROLE_LABELS,
-  boardPublicPath,
+  boardPostPath,
   formatPostDate,
   postCoverUrl,
   type BoardConfig,
@@ -15,12 +15,9 @@ import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { readBoard, saveBoard } from "@/lib/boards";
 import { listPosts, removePost, removeSelectedPosts, updatePostNotice } from "@/lib/posts";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-export default function AdminBoardPostsPage() {
-  const params = useParams<{ boardId: string }>();
-  const boardId = String(params.boardId ?? "");
+export function AdminBoardPostsView({ boardId }: { boardId: string }) {
   const [board, setBoard] = useState<BoardConfig | null>(null);
   const [posts, setPosts] = useState<BoardPost[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -254,7 +251,7 @@ export default function AdminBoardPostsPage() {
                 <td className="px-3 py-3">{post.isNotice ? "공지" : "일반"}</td>
                 <td className="px-3 py-3">
                   <div className="flex flex-col gap-1">
-                    <Link href={`${boardPublicPath(boardId)}/${post.id}`} className="rounded-full bg-cyan-500/15 px-3 py-1 text-center text-xs font-medium text-cyan-800 dark:text-cyan-glow">
+                    <Link href={boardPostPath(boardId, post.id)} className="rounded-full bg-cyan-500/15 px-3 py-1 text-center text-xs font-medium text-cyan-800 dark:text-cyan-glow">
                       보기
                     </Link>
                     <button type="button" onClick={() => void onDeleteOne(post)} className="rounded-full border border-[var(--line)] px-3 py-1 text-xs">

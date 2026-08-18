@@ -3,6 +3,7 @@
 import { useMembership } from "@/components/providers/MembershipProvider";
 import { PageHero } from "@/components/ui/PageHero";
 import {
+  boardPostPath,
   boardPublicPath,
   canWriteOnBoard,
   createGuestAuthorId,
@@ -198,7 +199,7 @@ export function PostEditor({ boardId, postId }: { boardId: string; postId?: stri
         authorUid,
         authorName,
       });
-      router.push(`${boardPublicPath(boardId)}/${savedId}`);
+      router.push(boardPostPath(boardId, savedId));
     } catch (error) {
       setErrorMessage(toKoreanFirebaseError(error, "글을 저장하지 못했습니다."));
     } finally {

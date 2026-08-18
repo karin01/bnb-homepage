@@ -3,7 +3,7 @@
 import { useMembership } from "@/components/providers/MembershipProvider";
 import { PageHero } from "@/components/ui/PageHero";
 import { ZoomableImageList } from "@/components/ui/ZoomableImageList";
-import { boardPublicPath, canAccessBoard, canWriteOnBoard, createGuestAuthorId, formatPostDate, listPostImageUrls, validateGuestDisplayName, type BoardComment, type BoardConfig, type BoardPost } from "@/data/boards";
+import { boardEditPath, boardPublicPath, canAccessBoard, canWriteOnBoard, createGuestAuthorId, formatPostDate, listPostImageUrls, validateGuestDisplayName, type BoardComment, type BoardConfig, type BoardPost } from "@/data/boards";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { readBoard } from "@/lib/boards";
 import { listComments, readPost, removeComment, removePost, saveComment } from "@/lib/posts";
@@ -127,7 +127,7 @@ export function PostDetailView({ boardId, postId }: { boardId: string; postId: s
           </Link>
           {canManagePost ? (
             <>
-              <Link href={`${boardPublicPath(boardId)}/${post.id}/edit`} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
+              <Link href={boardEditPath(boardId, post.id)} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
                 수정
               </Link>
               <button type="button" onClick={() => void onDeletePost()} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">

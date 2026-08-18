@@ -97,6 +97,7 @@
 - 2026-08-18 쉐어노트는 목록에서 제목을 누르면 게시글처럼 열린다. 글 안에 공부하기(PDF 화면), 다운로드, 노트 정리, 퀴즈 만들기를 나열했다. 정리·퀴즈는 서버 `GEMINI_API_KEY`가 있을 때만 동작한다.
 - 2026-08-19 쉐어노트 글에 본문(`body`)을 넣었다. 쓰기 화면에 본문 칸이 있고, 글을 열면 내용이 보이며 작성자·운영진은 수정할 수 있다. 예전 글은 본문이 비어 있다.
 - 2026-08-19 홈페이지 소스를 GitHub 전용 저장소에 올렸다. 주소는 `https://github.com/karin01/bnb-homepage` (비공개). git 루트는 `C:\Users\Luna\bnb-homepage`이다. 구글 드라이브 볼트 저장소나 기존 MyStock/LottoNumber에는 넣지 않았다. `.env.local`은 올리지 않았다.
+- 2026-08-19 포트폴리오처럼 GitHub Pages로 공개 주소를 만들었다. `https://karin01.github.io/bnb-homepage/` . Pages는 서버가 없어서 글·노트는 목록 주소에 번호를 붙이고, 비회원 글쓰기·AI 정리·실시간 IP 차단은 이 주소에서 동작하지 않는다. 로그인은 Firebase 콘솔에 `karin01.github.io`를 허용 도메인으로 넣어야 한다.
 
 ## 실행
 

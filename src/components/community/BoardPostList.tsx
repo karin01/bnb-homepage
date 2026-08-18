@@ -3,7 +3,9 @@
 import { useMembership } from "@/components/providers/MembershipProvider";
 import { PageHero } from "@/components/ui/PageHero";
 import {
-  boardPublicPath,
+  adminBoardPostsPath,
+  boardPostPath,
+  boardWritePath,
   canAccessBoard,
   canWriteOnBoard,
   formatPostDate,
@@ -106,12 +108,12 @@ export function BoardPostList({ boardId }: { boardId: string }) {
           )}
           <div className="flex flex-wrap gap-2">
             {isAdmin ? (
-              <Link href={`/admin/boards/${boardId}`} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
+              <Link href={adminBoardPostsPath(boardId)} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
                 글 관리
               </Link>
             ) : null}
             {canWrite ? (
-              <Link href={`${boardPublicPath(boardId)}/write`} className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-navy-950">
+              <Link href={boardWritePath(boardId)} className="rounded-full bg-cyan-500 px-4 py-2 text-sm font-semibold text-navy-950">
                 글쓰기
               </Link>
             ) : null}
@@ -131,7 +133,7 @@ export function BoardPostList({ boardId }: { boardId: string }) {
               const coverUrl = postCoverUrl(post);
               const imageCount = listPostImageUrls(post).length;
               return (
-              <Link key={post.id} href={`${boardPublicPath(boardId)}/${post.id}`} className="glass-card overflow-hidden rounded-3xl">
+              <Link key={post.id} href={boardPostPath(boardId, post.id)} className="glass-card overflow-hidden rounded-3xl">
                 <div className="relative">
                   {coverUrl ? (
                     // 외부 이미지 주소는 next/image 허용 목록 밖일 수 있어 일반 img를 씁니다.
@@ -156,7 +158,7 @@ export function BoardPostList({ boardId }: { boardId: string }) {
         ) : (
           <div className="grid gap-3">
             {visiblePosts.map((post) => (
-              <Link key={post.id} href={`${boardPublicPath(boardId)}/${post.id}`} className="glass-card flex items-center justify-between rounded-2xl p-5">
+              <Link key={post.id} href={boardPostPath(boardId, post.id)} className="glass-card flex items-center justify-between rounded-2xl p-5">
                 <div>
                   {post.isNotice ? <p className="text-xs text-cyan-700 dark:text-cyan-glow">공지</p> : null}
                   <h2 className="font-medium">{post.title}</h2>

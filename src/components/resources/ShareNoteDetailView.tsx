@@ -16,15 +16,15 @@ import {
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { getShareNoteDownloadUrl, readShareNote, removeShareNote, updateShareNoteContent } from "@/lib/share-notes";
+import { withBasePath } from "@/lib/site-path";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type StudyAction = "summarize" | "quiz";
 
 /** 제목을 눌러 들어온 쉐어노트 글. 공부하기·다운로드·정리·퀴즈를 한곳에 둡니다. */
-export function ShareNoteDetailView() {
-  const params = useParams<{ room: string; noteId: string }>();
+export function ShareNoteDetailView({ room, noteId }: { room: string; noteId: string }) {
   const router = useRouter();
   const { membership, uid, isAdmin } = useMembership();
   const [note, setNote] = useState<ShareNoteItem | null>(null);
@@ -44,7 +44,7 @@ export function ShareNoteDetailView() {
     let cancelled = false;
     const load = async () => {
       try {
-        const nextNote = await readShareNote(String(params.noteId ?? ""));
+        const nextNote = await readShareNote(noteId);
         if (cancelled) {
           return;
         }
@@ -68,7 +68,7 @@ export function ShareNoteDetailView() {
     return () => {
       cancelled = true;
     };
-  }, [params.noteId]);
+  }, [noteId]);
 
   const canOpenFile = membership === "member";
   const canManage = Boolean(note && (isAdmin || (uid && note.uploaderUid === uid)));
@@ -115,7 +115,7 @@ export function ShareNoteDetailView() {
       if (!token) {
         throw new Error("로그인 후 이용해 주세요.");
       }
-      const response = await fetch("/api/share-notes/study", {
+      const response = await fetch(withBasePath("/api/share-notes/study"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,10 @@ export function ShareNoteDetailView() {
         },
         body: JSON.stringify({ action, fileUrl: url }),
       });
-      const payload = (await response.json()) as { result?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as { result?: string; error?: string };
+      if (response.status === 404 || response.status === 405) {
+        throw new Error("공개 웹 배포에서는 노트 정리·퀴즈 서버가 없습니다. 로컬 실행에서 이용해 주세요.");
+      }
       if (!response.ok) {
         throw new Error(payload.error || "정리·퀴즈를 만들지 못했습니다.");
       }
@@ -178,7 +181,7 @@ export function ShareNoteDetailView() {
     return <p className="px-5 py-16 text-sm text-[var(--text-muted)]">노트를 불러오는 중입니다.</p>;
   }
 
-  if (!note || parseArchiveRoomId(String(params.room ?? "")) !== note.room) {
+  if (!note || parseArchiveRoomId(room) !== note.room) {
     return (
       <section className="mx-auto max-w-4xl px-5 py-16">
         <p className="text-sm text-[var(--text-muted)]">없는 노트입니다.</p>

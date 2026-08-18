@@ -12,6 +12,7 @@ import {
 } from "@/data/security";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
+import { withBasePath } from "@/lib/site-path";
 import {
   ensureGuestAccessSettings,
   listBlockedIps,
@@ -74,7 +75,7 @@ export default function AdminSecurityPage() {
     setBlockedIps(await listBlockedIps());
 
     const token = await readAdminToken();
-    const response = await fetch("/api/security/runtime-blocks", {
+    const response = await fetch(withBasePath("/api/security/runtime-blocks"), {
       headers: { Authorization: `Bearer ${token}` },
     });
     const payload = (await response.json()) as {
@@ -170,7 +171,7 @@ export default function AdminSecurityPage() {
     try {
       await saveBlockedIp({ ip, reason: reason || "도배 자동 차단을 영구 차단으로 옮김", createdByName: memberName || "운영진" });
       const token = await readAdminToken();
-      await fetch("/api/security/runtime-blocks", {
+      await fetch(withBasePath("/api/security/runtime-blocks"), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -188,7 +189,7 @@ export default function AdminSecurityPage() {
   const onRemoveTemp = async (ip: string) => {
     try {
       const token = await readAdminToken();
-      const response = await fetch("/api/security/runtime-blocks", {
+      const response = await fetch(withBasePath("/api/security/runtime-blocks"), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

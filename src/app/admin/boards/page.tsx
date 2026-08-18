@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminBoardPostsView } from "@/components/admin/AdminBoardPostsView";
 import {
   BOARD_GROUPS,
   BOARD_READ_ROLES,
@@ -8,13 +9,15 @@ import {
   BOARD_SKIN_LABELS,
   BOARD_WRITE_ROLES,
   BOARD_WRITE_ROLE_LABELS,
+  adminBoardPostsPath,
   boardPublicPath,
   type BoardConfig,
 } from "@/data/boards";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
 import { listBoardsOrSeed, removeBoard, saveBoard, saveSelectedBoards, validateBoardInput } from "@/lib/boards";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 const EMPTY_FORM: BoardConfig = {
   id: "",
@@ -31,6 +34,23 @@ const EMPTY_FORM: BoardConfig = {
 };
 
 export default function AdminBoardsPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-[var(--text-muted)]">게시판을 불러오는 중입니다.</p>}>
+      <AdminBoardsGate />
+    </Suspense>
+  );
+}
+
+function AdminBoardsGate() {
+  const searchParams = useSearchParams();
+  const boardId = (searchParams.get("board") ?? "").trim();
+  if (boardId) {
+    return <AdminBoardPostsView boardId={boardId} />;
+  }
+  return <AdminBoardsList />;
+}
+
+function AdminBoardsList() {
   const [boards, setBoards] = useState<BoardConfig[]>([]);
   const [drafts, setDrafts] = useState<BoardConfig[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -352,7 +372,7 @@ export default function AdminBoardsPage() {
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex flex-col gap-1">
-                    <Link href={`/admin/boards/${board.id}`} className="rounded-full bg-cyan-500 px-3 py-1 text-center text-xs font-semibold text-navy-950">
+                    <Link href={adminBoardPostsPath(board.id)} className="rounded-full bg-cyan-500 px-3 py-1 text-center text-xs font-semibold text-navy-950">
                       글 관리
                     </Link>
                     <Link href={boardPublicPath(board.id)} className="rounded-full bg-cyan-500/15 px-3 py-1 text-center text-xs font-medium text-cyan-800 dark:text-cyan-glow">

@@ -2,7 +2,8 @@
 
 한국방송통신대학교 컴퓨터과학과 스터디 **Bit & Byte**의 모던 리뉴얼 프론트엔드입니다.
 
-기존 사이트: [http://bnbstudy.co.kr/](http://bnbstudy.co.kr/)
+기존 사이트: [http://bnbstudy.co.kr/](http://bnbstudy.co.kr/)  
+공개 미리보기: [https://karin01.github.io/bnb-homepage/](https://karin01.github.io/bnb-homepage/)
 
 ## 왜 이렇게 만들었나
 
@@ -19,6 +20,8 @@
 
 Google Drive 폴더에서는 `npm install`이 실패할 수 있습니다.  
 로컬 디스크에서 실행하는 것을 권장합니다.
+
+GitHub Pages 주소는 소스만 정적 HTML로 올린 미리보기입니다. 비회원 글쓰기 IP 검사와 쉐어노트 AI 정리·퀴즈는 로컬 서버(`npm run dev`)에서만 동작합니다.
 
 ```bash
 cd C:\Users\Luna\bnb-homepage

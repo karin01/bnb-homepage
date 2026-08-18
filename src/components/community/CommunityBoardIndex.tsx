@@ -3,7 +3,9 @@
 import { useMembership } from "@/components/providers/MembershipProvider";
 import { PageHero } from "@/components/ui/PageHero";
 import {
+  boardPostPath,
   boardPublicPath,
+  boardWritePath,
   canAccessBoard,
   canWriteOnBoard,
   formatPostDateShort,
@@ -116,7 +118,7 @@ export function CommunityBoardIndex() {
                   <div className="flex shrink-0 items-center gap-2">
                     {canWrite ? (
                       <Link
-                        href={`${boardPublicPath(board.id)}/write`}
+                        href={boardWritePath(board.id)}
                         className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-semibold text-navy-950"
                       >
                         글쓰기
@@ -135,7 +137,7 @@ export function CommunityBoardIndex() {
                 {isGallery && galleryPosts.length > 0 ? (
                   <div className="mb-3 grid grid-cols-3 gap-2">
                     {galleryPosts.slice(0, 3).map((post) => (
-                      <Link key={post.id} href={`${boardPublicPath(board.id)}/${post.id}`} className="overflow-hidden rounded-xl">
+                      <Link key={post.id} href={boardPostPath(board.id, post.id)} className="overflow-hidden rounded-xl">
                         <img src={postCoverUrl(post)} alt="" className="h-20 w-full object-cover" />
                       </Link>
                     ))}
@@ -149,7 +151,7 @@ export function CommunityBoardIndex() {
                     {posts.map((post) => (
                       <li key={post.id}>
                         <Link
-                          href={`${boardPublicPath(board.id)}/${post.id}`}
+                          href={boardPostPath(board.id, post.id)}
                           className="flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/5"
                         >
                           <span className="mt-0.5 h-1 w-1 shrink-0 rounded-full bg-[var(--text-muted)]" />
