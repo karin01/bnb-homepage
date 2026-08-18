@@ -33,6 +33,11 @@ const EMPTY_ADD_FORM = {
 
 type StatusFilter = "all" | MemberStatus;
 
+/** 표 안 입력칸 높이를 한 줄로 맞춰, 칸마다 들쑥날쑥하지 않게 합니다. */
+const TABLE_CONTROL = "h-9 w-full rounded-lg border border-[var(--line)] bg-[var(--bg-elevated)] px-2 text-sm";
+const TABLE_CELL = "px-2 py-2 align-middle";
+const TABLE_HEAD = "px-2 py-2.5 align-middle whitespace-nowrap";
+
 export default function AdminMembersPage() {
   const { uid: myUid } = useMembership();
   const [members, setMembers] = useState<SiteMember[]>([]);
@@ -350,10 +355,10 @@ export default function AdminMembersPage() {
       {isLoading ? <p className="text-sm text-[var(--text-muted)]">회원 목록을 불러오는 중입니다.</p> : null}
 
       <div className="overflow-x-auto rounded-3xl border border-[var(--line)]">
-        <table className="min-w-full text-left text-sm">
+        <table className="w-full min-w-[1280px] border-collapse text-left text-sm">
           <thead className="bg-black/5 text-xs text-[var(--text-muted)] dark:bg-white/5">
-            <tr>
-              <th className="px-4 py-3">
+            <tr className="border-b border-[var(--line)]">
+              <th className={`${TABLE_HEAD} w-10 px-3`}>
                 <input
                   type="checkbox"
                   checked={allVisibleSelected}
@@ -361,28 +366,32 @@ export default function AdminMembersPage() {
                   aria-label="현재 목록 전체 선택"
                 />
               </th>
-              <th className="px-4 py-3">이름 / 아이디</th>
-              <th className="px-4 py-3">기수 / 학번</th>
-              <th className="px-4 py-3">학년</th>
-              <th className="px-4 py-3">권한</th>
-              <th className="px-4 py-3">상태</th>
-              <th className="px-4 py-3">연락처</th>
-              <th className="px-4 py-3">가입 / 최근접속</th>
-              <th className="px-4 py-3">관리</th>
+              <th className={TABLE_HEAD}>이름</th>
+              <th className={TABLE_HEAD}>아이디</th>
+              <th className={TABLE_HEAD}>이메일</th>
+              <th className={TABLE_HEAD}>기수</th>
+              <th className={TABLE_HEAD}>학번</th>
+              <th className={TABLE_HEAD}>학년</th>
+              <th className={TABLE_HEAD}>권한</th>
+              <th className={TABLE_HEAD}>상태</th>
+              <th className={TABLE_HEAD}>연락처</th>
+              <th className={TABLE_HEAD}>가입</th>
+              <th className={TABLE_HEAD}>최근접속</th>
+              <th className={`${TABLE_HEAD} px-3`}>관리</th>
             </tr>
           </thead>
           <tbody>
             {filteredMembers.map((member) => (
-              <tr key={member.uid} className="border-t border-[var(--line)]">
-                <td className="px-4 py-3">
+              <tr key={member.uid} className="border-b border-[var(--line)] last:border-b-0 hover:bg-black/[0.03] dark:hover:bg-white/[0.03]">
+                <td className={`${TABLE_CELL} px-3`}>
                   <input type="checkbox" checked={selectedIds.includes(member.uid)} onChange={() => toggleSelect(member.uid)} aria-label={`${member.name} 선택`} />
                 </td>
-                <td className="px-4 py-3">
-                  <p className="font-medium">{member.name}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{member.loginId}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{member.email}</p>
+                <td className={`${TABLE_CELL} whitespace-nowrap font-medium`}>{member.name}</td>
+                <td className={`${TABLE_CELL} whitespace-nowrap font-mono text-xs text-[var(--text-muted)]`}>{member.loginId}</td>
+                <td className={`${TABLE_CELL} max-w-[14rem] truncate text-xs text-[var(--text-muted)]`} title={member.email}>
+                  {member.email}
                 </td>
-                <td className="px-4 py-3">
+                <td className={`${TABLE_CELL} w-[6.5rem]`}>
                   <select
                     value={displayCohort(member.grade, member.cohort) ?? ""}
                     onChange={(event) => {
@@ -391,7 +400,8 @@ export default function AdminMembersPage() {
                         void changeField(member, { cohort: nextCohort });
                       }
                     }}
-                    className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1"
+                    className={TABLE_CONTROL}
+                    aria-label={`${member.name} 기수`}
                   >
                     {displayCohort(member.grade, member.cohort) === null ? <option value="">미입력</option> : null}
                     {cohortSelectOptionsFor(displayCohort(member.grade, member.cohort)).map((cohort) => (
@@ -400,10 +410,15 @@ export default function AdminMembersPage() {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">{member.studentId}</p>
                 </td>
-                <td className="px-4 py-3">
-                  <select value={member.grade} onChange={(event) => void changeField(member, { grade: event.target.value })} className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1">
+                <td className={`${TABLE_CELL} whitespace-nowrap font-mono text-xs text-[var(--text-muted)]`}>{member.studentId}</td>
+                <td className={`${TABLE_CELL} w-[6.5rem]`}>
+                  <select
+                    value={member.grade}
+                    onChange={(event) => void changeField(member, { grade: event.target.value })}
+                    className={TABLE_CONTROL}
+                    aria-label={`${member.name} 학년`}
+                  >
                     {MEMBER_GRADES.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -411,8 +426,13 @@ export default function AdminMembersPage() {
                     ))}
                   </select>
                 </td>
-                <td className="px-4 py-3">
-                  <select value={member.role} onChange={(event) => void changeField(member, { role: event.target.value as MemberRole })} className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1">
+                <td className={`${TABLE_CELL} w-[9.75rem]`}>
+                  <select
+                    value={member.role}
+                    onChange={(event) => void changeField(member, { role: event.target.value as MemberRole })}
+                    className={TABLE_CONTROL}
+                    aria-label={`${member.name} 권한`}
+                  >
                     {MEMBER_ROLES.map((role) => (
                       <option key={role} value={role}>
                         {ROLE_LABELS[role]}
@@ -420,12 +440,13 @@ export default function AdminMembersPage() {
                     ))}
                   </select>
                 </td>
-                <td className="px-4 py-3">
+                <td className={`${TABLE_CELL} w-[6rem]`}>
                   <select
                     value={member.status}
                     disabled={member.uid === myUid}
                     onChange={(event) => void changeField(member, { status: event.target.value as MemberStatus })}
-                    className="rounded-xl border border-[var(--line)] bg-transparent px-2 py-1"
+                    className={TABLE_CONTROL}
+                    aria-label={`${member.name} 상태`}
                   >
                     {MEMBER_STATUSES.map((status) => (
                       <option key={status} value={status}>
@@ -434,19 +455,17 @@ export default function AdminMembersPage() {
                     ))}
                   </select>
                 </td>
-                <td className="px-4 py-3">{member.phone}</td>
-                <td className="px-4 py-3 text-xs text-[var(--text-muted)]">
-                  <p>{formatMemberDate(member.createdAt)}</p>
-                  <p>{formatMemberDate(member.lastLoginAt)}</p>
-                </td>
-                <td className="px-4 py-3">
+                <td className={`${TABLE_CELL} whitespace-nowrap`}>{member.phone}</td>
+                <td className={`${TABLE_CELL} whitespace-nowrap text-xs text-[var(--text-muted)]`}>{formatMemberDate(member.createdAt)}</td>
+                <td className={`${TABLE_CELL} whitespace-nowrap text-xs text-[var(--text-muted)]`}>{formatMemberDate(member.lastLoginAt)}</td>
+                <td className={`${TABLE_CELL} px-3`}>
                   <button
                     type="button"
                     onClick={() => {
                       setEditingUid(member.uid);
                       setEditForm({ name: member.name, studentId: member.studentId, phone: member.phone });
                     }}
-                    className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-medium text-cyan-800 dark:text-cyan-glow"
+                    className="inline-flex h-9 items-center rounded-lg bg-cyan-500/15 px-3 text-xs font-medium text-cyan-800 dark:text-cyan-glow"
                   >
                     수정
                   </button>
