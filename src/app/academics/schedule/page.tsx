@@ -108,7 +108,7 @@ export default function SchedulePage() {
         title="학사일정 + 스터디 강의 통합 캘린더"
         description="출석수업은 주황색, 시험·과제는 호박색, 스터디는 청록색으로 구분합니다. 학년과 과목 이름으로 주간 시간표를 필터할 수 있습니다."
       />
-      <section className="mx-auto grid max-w-6xl gap-6 px-5 py-12 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="mx-auto grid max-w-6xl gap-6 px-5 py-12 lg:grid-cols-2">
         <article className="glass-card rounded-3xl p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">
@@ -165,9 +165,19 @@ export default function SchedulePage() {
           <CalendarMarkLegend />
         </article>
         <article className="glass-card rounded-3xl p-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-semibold">{selectedDate} 일정</h2>
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="mb-4 grid gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="whitespace-nowrap text-lg font-semibold">{selectedDate} 일정</h2>
+              {isAdmin ? (
+                <Link
+                  href="/admin/calendar"
+                  className="shrink-0 rounded-full border border-[var(--line)] px-3 py-1.5 text-sm font-semibold text-cyan-700 dark:text-cyan-glow"
+                >
+                  일정 추가
+                </Link>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <select
                 value={categoryFilter}
                 onChange={(event) => {
@@ -176,7 +186,7 @@ export default function SchedulePage() {
                     setCategoryFilter(value as "all" | CalendarEvent["category"]);
                   }
                 }}
-                className="rounded-full border border-[var(--line)] bg-transparent px-3 py-1.5 text-sm"
+                className="h-9 min-w-0 rounded-full border border-[var(--line)] bg-transparent px-3 text-sm"
                 aria-label="일정 구분 필터"
               >
                 <option value="all">전체 구분</option>
@@ -194,7 +204,7 @@ export default function SchedulePage() {
                     setCampusFilter(nextCampus);
                   }
                 }}
-                className="rounded-full border border-[var(--line)] bg-transparent px-3 py-1.5 text-sm"
+                className="h-9 min-w-0 rounded-full border border-[var(--line)] bg-transparent px-3 text-sm"
                 aria-label="대학교 필터"
               >
                 {CALENDAR_CAMPUSES.map((campus) => (
@@ -203,14 +213,9 @@ export default function SchedulePage() {
                   </option>
                 ))}
               </select>
-              {isAdmin ? (
-                <Link href="/admin/calendar" className="text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
-                  일정 추가
-                </Link>
-              ) : null}
             </div>
           </div>
-          <div className="mt-4 grid gap-3">
+          <div className="grid gap-3">
             {!hasDayItems ? (
               <p className="text-sm text-[var(--text-muted)]">이 날짜에는 등록된 학사/스터디 일정이 없습니다.</p>
             ) : (
