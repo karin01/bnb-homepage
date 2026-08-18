@@ -9,6 +9,7 @@ import {
   type SiteMember,
 } from "@/lib/accounts";
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { CohortAutoField } from "@/components/account/CohortAutoField";
 import { cohortFromGrade, cohortSelectOptionsFor, displayCohort, formatCohort, parseCohort } from "@/data/cohort";
 import { MEMBER_GRADES } from "@/data/member-grades";
 import { SITE } from "@/data/site";
@@ -289,16 +290,11 @@ export default function AdminMembersPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm">
-            기수
-            <select value={addForm.cohort} onChange={(event) => setAddForm({ ...addForm, cohort: event.target.value })} className="rounded-xl border border-[var(--line)] bg-transparent px-3 py-2">
-              {cohortSelectOptionsFor(parseCohort(addForm.cohort)).map((cohort) => (
-                <option key={cohort} value={cohort}>
-                  {formatCohort(cohort)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CohortAutoField
+            grade={addForm.grade}
+            cohort={addForm.cohort}
+            onChange={(cohort) => setAddForm({ ...addForm, cohort })}
+          />
           <label className="grid gap-1 text-sm">
             연락처
             <input value={addForm.phone} onChange={(event) => setAddForm({ ...addForm, phone: event.target.value })} className="rounded-xl border border-[var(--line)] bg-transparent px-3 py-2" placeholder="010-1234-5678" />

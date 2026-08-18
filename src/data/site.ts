@@ -1,3 +1,5 @@
+import { freshmanCohortForYear } from "@/data/cohort";
+
 /** 사이트 전역 상수 — 나중에 CMS/Supabase로 교체하기 쉬운 형태로 모읍니다. */
 export const SITE = {
   name: "Bit & Byte",
@@ -6,7 +8,7 @@ export const SITE = {
   description:
     "한국방송통신대학교 컴퓨터과학과 No.1 스터디그룹 Bit & Byte. 전공 학습, 학년별 자료실, 소모임, 혜화동 아지트를 한곳에서 안내합니다.",
   establishedYear: 1990,
-  currentCohort: 38, // 2026년 1학년이 38기. 앵커 연도는 src/data/cohort.ts
+  currentCohort: freshmanCohortForYear(), // 올해 1학년 기수. 계산은 src/data/cohort.ts
   semesterLabel: "2026학년도 2학기",
   locationLabel: "서울 종로구 혜화동",
   locationDetail: "서울지역대학에서 도보 약 9분, 혜화동 BnB 아지트",

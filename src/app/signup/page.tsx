@@ -2,8 +2,9 @@
 
 import { PageHero } from "@/components/ui/PageHero";
 import { useMembership } from "@/components/providers/MembershipProvider";
+import { CohortAutoField } from "@/components/account/CohortAutoField";
 import { SITE } from "@/data/site";
-import { cohortFromGrade, cohortSelectOptions } from "@/data/cohort";
+import { cohortFromGrade } from "@/data/cohort";
 import { MEMBER_GRADES } from "@/data/member-grades";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
@@ -123,21 +124,11 @@ export default function SignupPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm">
-            기수
-            <select
-              value={form.cohort}
-              onChange={(event) => setForm({ ...form, cohort: event.target.value })}
-              className="rounded-xl border border-[var(--line)] bg-transparent px-3 py-2"
-            >
-              {cohortSelectOptions().map((cohort) => (
-                <option key={cohort} value={cohort}>
-                  {cohort}기
-                </option>
-              ))}
-            </select>
-            <span className="text-xs text-[var(--text-muted)]">2026년 기준 1학년=38기, 2학년=37기입니다. 편입·OB·유급만 기수를 직접 고르면 됩니다.</span>
-          </label>
+          <CohortAutoField
+            grade={form.grade}
+            cohort={form.cohort}
+            onChange={(cohort) => setForm({ ...form, cohort })}
+          />
           <label className="grid gap-1 text-sm">
             연락처
             <input
