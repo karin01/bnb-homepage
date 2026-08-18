@@ -242,7 +242,7 @@ export default function AdminCalendarPage() {
 
       <article className="glass-card rounded-3xl p-5">
         <h2 className="font-semibold">등록된 일정 {isLoading ? "" : `(${events.length})`}</h2>
-        <div className="mt-4 grid gap-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {sortCalendarEventsForDisplay(events).map((item) => (
             <CalendarEventCard
               key={item.id}

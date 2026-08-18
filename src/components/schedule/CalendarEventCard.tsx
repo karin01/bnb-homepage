@@ -45,11 +45,11 @@ export function CalendarEventCard({ event, actions }: CalendarEventCardProps) {
   const meetingLabel = event.meetingMode === "none" ? "" : calendarMeetingModeLabel(event.meetingMode);
 
   return (
-    <article className={`relative overflow-hidden rounded-2xl border px-4 py-3 ${theme.card}`}>
+    <article className={`relative flex h-full flex-col overflow-hidden rounded-2xl border px-4 py-3 ${theme.card}`}>
       {/* 왼쪽 색 막대: 카드가 많아도 학사/스터디를 세로로 훑을 수 있습니다. */}
       <span className={`absolute inset-y-0 left-0 w-1.5 ${theme.bar}`} aria-hidden />
-      <div className="flex flex-col gap-3 pl-2 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 pl-2">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${theme.badge}`}>{visualCategory}</span>
             {highlightLabel ? (
@@ -64,11 +64,11 @@ export function CalendarEventCard({ event, actions }: CalendarEventCardProps) {
               {campusLabel}
             </span>
           </div>
-          <p className="mt-2 text-base font-semibold tracking-tight">{event.title}</p>
+          <p className="mt-2 text-base font-semibold tracking-tight break-keep">{event.title}</p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">{formatCalendarEventPeriod(event)}</p>
-          {event.description.trim() ? <p className="mt-1 text-sm text-[var(--text-muted)]">{event.description}</p> : null}
+          {event.description.trim() ? <p className="mt-1 text-sm text-[var(--text-muted)] break-keep">{event.description}</p> : null}
         </div>
-        {actions ? <div className="flex shrink-0 gap-2">{actions}</div> : null}
+        {actions ? <div className="flex gap-2">{actions}</div> : null}
       </div>
     </article>
   );
