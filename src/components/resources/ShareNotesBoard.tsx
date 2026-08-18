@@ -1,6 +1,6 @@
 "use client";
 
-import { archiveRoomLabel, shareNotePath, type ArchiveRoomId } from "@/data/resources";
+import { archiveRoomLabel, shareNotePath, toArchiveRoomField, type ArchiveRoomId } from "@/data/resources";
 import { useMembership } from "@/components/providers/MembershipProvider";
 import {
   SHARE_NOTE_MAX_BODY_LENGTH,
@@ -32,7 +32,7 @@ function noteKindLabel(item: ShareNoteItem) {
 }
 
 /** 게시판 목록처럼 제목을 누르면 글이 열리고, 공부 기능은 그 안에서 씁니다. */
-export function ShareNotesBoard({ room }: { room: ArchiveRoomId }) {
+export function ShareNotesBoard({ room }: { room?: ArchiveRoomId }) {
   const router = useRouter();
   const { membership, uid, memberName } = useMembership();
   const { notes, isLoading, errorMessage, reload } = useShareNotes();
@@ -45,9 +45,12 @@ export function ShareNotesBoard({ room }: { room: ArchiveRoomId }) {
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const roomNotes = useMemo(() => notes.filter((item) => item.room === room), [notes, room]);
+  const roomNotes = useMemo(
+    () => (room ? notes.filter((item) => toArchiveRoomField(item.room) === toArchiveRoomField(room)) : notes),
+    [notes, room],
+  );
   const filtered = useMemo(() => filterShareNotes(notes, keyword, room), [keyword, notes, room]);
-  const canUpload = membership === "member";
+  const canUpload = Boolean(room) && membership === "member";
 
   const resetForm = () => {
     setTitle("");
@@ -58,6 +61,10 @@ export function ShareNotesBoard({ room }: { room: ArchiveRoomId }) {
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!room) {
+      setFormError("자료실 방을 먼저 골라 주세요.");
+      return;
+    }
     if (!canUpload) {
       setFormError("로그인 후 노트를 올릴 수 있습니다.");
       return;
@@ -120,7 +127,7 @@ export function ShareNotesBoard({ room }: { room: ArchiveRoomId }) {
       {showWriter && canUpload ? (
         <form onSubmit={onSubmit} className="glass-card grid gap-3 rounded-3xl p-5 md:grid-cols-2">
           <p className="md:col-span-2 text-sm text-[var(--text-muted)]">
-            {archiveRoomLabel(room)} 방에 제목, 본문, 태그를 붙여 올립니다. 작성자는 로그인한 이름으로 남고, 본인 또는 운영진만 고치거나 지울 수 있습니다.
+            {room ? archiveRoomLabel(room) : "자료실"} 방에 제목, 본문, 태그를 붙여 올립니다. 작성자는 로그인한 이름으로 남고, 본인 또는 운영진만 고치거나 지울 수 있습니다.
           </p>
           <label className="grid gap-1 text-sm md:col-span-2">
             제목
@@ -189,7 +196,9 @@ export function ShareNotesBoard({ room }: { room: ArchiveRoomId }) {
         {!isLoading && filtered.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">
             {roomNotes.length === 0
-              ? "아직 이 방에 올라온 노트가 없습니다. 정리본을 올려 주세요."
+              ? room
+                ? "아직 이 방에 올라온 노트가 없습니다. 정리본을 올려 주세요."
+                : "아직 올라온 노트가 없습니다. 학년 방을 눌러 정리본을 올려 주세요."
               : "조건에 맞는 노트가 없습니다."}
           </p>
         ) : (
@@ -201,6 +210,7 @@ export function ShareNotesBoard({ room }: { room: ArchiveRoomId }) {
             >
               <div>
                 <p className="text-xs text-cyan-700 dark:text-cyan-glow">
+                  {!room ? `${archiveRoomLabel(item.room)} · ` : ""}
                   {noteKindLabel(item)} · {item.tags.join(" · ")}
                 </p>
                 <h2 className="mt-1 font-medium">{item.title}</h2>

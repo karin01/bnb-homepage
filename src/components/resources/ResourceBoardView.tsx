@@ -9,16 +9,24 @@ import { useMembership } from "@/components/providers/MembershipProvider";
 import { ARCHIVE_HUB_PATH, GRADE_ROOMS, parseArchiveRoomId } from "@/data/resources";
 import { CLUB_ARCHIVE_ROOM } from "@/data/share-notes";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+function readRoomParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] ?? "" : String(value ?? "");
+}
 
 function ResourceBoardViewInner() {
   const params = useParams<{ room: string }>();
-  const searchParams = useSearchParams();
   const { isAdmin } = useMembership();
-  const roomValue = String(params.room ?? "");
+  const roomValue = readRoomParam(params.room);
   const room = parseArchiveRoomId(roomValue);
-  const noteId = (searchParams.get("note") ?? "").trim();
+  const [noteId, setNoteId] = useState("");
+
+  useEffect(() => {
+    const nextNoteId = new URLSearchParams(window.location.search).get("note")?.trim() ?? "";
+    setNoteId(nextNoteId);
+  }, [roomValue]);
 
   if (noteId) {
     return <ShareNoteDetailView room={roomValue} noteId={noteId} />;
@@ -60,31 +68,27 @@ function ResourceBoardViewInner() {
           ) : null}
         </div>
         <ArchiveRoomNav activeRoom={room} />
-        {!isClubRoom ? (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold">운영진 자료</h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">연도·학기·과목으로 올린 공식 자료입니다.</p>
-            <ResourceFileList grade={room} />
-          </div>
-        ) : null}
         <div className="mt-10">
           <h2 className="text-lg font-semibold">쉐어노트</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            제목을 누르면 게시글처럼 열립니다. 그 안에서 공부하기, 다운로드, 노트 정리, 퀴즈를 쓸 수 있습니다.
+            학우가 올린 정리 노트입니다. 제목을 누르면 공부하기, 다운로드, 노트 정리, 퀴즈를 쓸 수 있습니다.
           </p>
           <div className="mt-4">
             <ShareNotesBoard room={room} />
           </div>
         </div>
+        {!isClubRoom ? (
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold">운영진 자료</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">연도·학기·과목으로 올린 공식 자료입니다. 쉐어노트와는 별도 목록입니다.</p>
+            <ResourceFileList grade={room} />
+          </div>
+        ) : null}
       </section>
     </>
   );
 }
 
 export function ResourceBoardView() {
-  return (
-    <Suspense fallback={<p className="px-5 py-16 text-sm text-[var(--text-muted)]">자료실을 불러오는 중입니다.</p>}>
-      <ResourceBoardViewInner />
-    </Suspense>
-  );
+  return <ResourceBoardViewInner />;
 }

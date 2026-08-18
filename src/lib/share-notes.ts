@@ -136,7 +136,9 @@ export async function readShareNote(noteId: string) {
 }
 
 export function filterShareNotes(notes: ShareNoteItem[], keyword: string, room?: ArchiveRoomId) {
-  const scoped = room ? notes.filter((note) => note.room === room) : notes;
+  const scoped = room
+    ? notes.filter((note) => toArchiveRoomField(note.room) === toArchiveRoomField(room))
+    : notes;
   const queryTags = parseShareNoteTags(keyword);
   const haystack = keyword.trim().toLowerCase();
   if (!haystack) {

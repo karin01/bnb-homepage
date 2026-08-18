@@ -2,6 +2,7 @@
 
 import { ArchiveRoomNav } from "@/components/resources/ArchiveRoomNav";
 import { ResourceFileList } from "@/components/resources/ResourceFileList";
+import { ShareNotesBoard } from "@/components/resources/ShareNotesBoard";
 import { PageHero } from "@/components/ui/PageHero";
 import { useMembership } from "@/components/providers/MembershipProvider";
 import { ARCHIVE_HUB_PATH, parseArchiveRoomId } from "@/data/resources";
@@ -56,7 +57,20 @@ export default function ResourcesPage() {
           ) : null}
         </div>
         <ArchiveRoomNav activeRoom="all" />
-        <ResourceFileList grade="all" />
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold">쉐어노트</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            학우가 올린 노트입니다. 1학년 글을 보려면 위 1학년 방을 눌러도 되고, 여기서 제목을 눌러도 됩니다.
+          </p>
+          <div className="mt-4">
+            <ShareNotesBoard />
+          </div>
+        </div>
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold">운영진 자료</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">운영진이 연도·학기·과목으로 올린 공식 파일입니다.</p>
+          <ResourceFileList grade="all" />
+        </div>
       </section>
     </>
   );

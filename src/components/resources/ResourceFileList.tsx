@@ -60,7 +60,7 @@ export function ResourceFileList({ grade }: ResourceFileListProps) {
         {!isLoading && filtered.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">
             {gradeCount === 0
-              ? "아직 올라온 자료가 없습니다. 운영진이 올리면 이 화면에 나타납니다."
+              ? "운영진이 올린 공식 자료는 아직 없습니다. 학우 노트는 위 쉐어노트를 봐 주세요."
               : "조건에 맞는 자료가 없습니다."}
           </p>
         ) : (
