@@ -8,6 +8,7 @@ import {
   calendarDayMarks,
   calendarEventMatchesCampus,
   calendarEventOccursOnDate,
+  calendarEventVisualCategory,
   formatLecturePeriod,
   formatLectureWhen,
   GRADE_OPTIONS,
@@ -74,7 +75,7 @@ export default function SchedulePage() {
       if (!calendarEventOccursOnDate(event, selectedDate) || !calendarEventMatchesCampus(event, campusFilter)) {
         return false;
       }
-      if (categoryFilter !== "all" && event.category !== categoryFilter) {
+      if (categoryFilter !== "all" && calendarEventVisualCategory(event) !== categoryFilter) {
         return false;
       }
       return true;
@@ -105,7 +106,7 @@ export default function SchedulePage() {
       <PageHero
         eyebrow="Calendar"
         title="학사일정 + 스터디 강의 통합 캘린더"
-        description="출석수업·시험 같은 학사는 주황색, 스터디는 청록색으로 구분합니다. 학년과 과목 이름으로 주간 시간표를 필터할 수 있습니다."
+        description="출석수업은 주황색, 시험·과제는 호박색, 스터디는 청록색으로 구분합니다. 학년과 과목 이름으로 주간 시간표를 필터할 수 있습니다."
       />
       <section className="mx-auto grid max-w-6xl gap-6 px-5 py-12 lg:grid-cols-[1.1fr_0.9fr]">
         <article className="glass-card rounded-3xl p-6">
@@ -136,6 +137,7 @@ export default function SchedulePage() {
             ))}
             {days.map((cell, index) => {
               const marks = cell ? marksByDate.get(cell.date) ?? [] : [];
+              const hasAttendance = marks.includes("출석수업");
               const hasAcademic = marks.includes("학사");
               return cell ? (
                 <button
@@ -145,9 +147,11 @@ export default function SchedulePage() {
                   className={`rounded-xl py-3 text-sm ${
                     selectedDate === cell.date
                       ? "bg-cyan-500 text-navy-950"
-                      : hasAcademic
-                        ? "bg-amber-100 text-amber-950 hover:bg-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:hover:bg-amber-400/25"
-                        : "hover:bg-black/5 dark:hover:bg-white/5"
+                      : hasAttendance
+                        ? "bg-orange-100 text-orange-950 hover:bg-orange-200 dark:bg-orange-400/15 dark:text-orange-100 dark:hover:bg-orange-400/25"
+                        : hasAcademic
+                          ? "bg-amber-100 text-amber-950 hover:bg-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:hover:bg-amber-400/25"
+                          : "hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   {cell.day}
@@ -178,7 +182,7 @@ export default function SchedulePage() {
                 <option value="all">전체 구분</option>
                 {CALENDAR_EVENT_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
-                    {category === "학사" ? "학사(시험·출석)" : category}
+                    {category === "학사" ? "학사(시험·과제)" : category}
                   </option>
                 ))}
               </select>

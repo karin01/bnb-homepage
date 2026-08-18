@@ -1,8 +1,9 @@
 import type { CalendarDayMark } from "@/data/schedule";
 import { CALENDAR_DAY_MARK_ORDER } from "@/data/schedule";
 
-/** 달력 점 색. 학사만 주황이라 시험·출석 날이 따로 보입니다. */
+/** 달력 점 색. 출석수업은 주황, 학사(시험·과제)는 호박색입니다. */
 export const CALENDAR_MARK_DOT_CLASS: Record<CalendarDayMark, string> = {
+  출석수업: "bg-orange-500",
   학사: "bg-amber-500",
   스터디: "bg-cyan-500",
   행사: "bg-violet-500",
@@ -29,7 +30,8 @@ export function CalendarDayMarks({ marks, inverted = false }: CalendarDayMarksPr
 }
 
 const MARK_LABEL: Record<CalendarDayMark, string> = {
-  학사: "학사(시험·출석)",
+  출석수업: "출석수업",
+  학사: "학사(시험·과제)",
   스터디: "스터디",
   행사: "행사",
   강의: "정규 강의",

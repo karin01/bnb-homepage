@@ -356,17 +356,43 @@ export const CALENDAR_CAMPUSES = [
 
 export type CalendarCampus = (typeof CALENDAR_CAMPUSES)[number]["value"];
 
+export type CalendarEventCategory = "출석수업" | "학사" | "스터디" | "행사";
+
+/** 출석수업은 학사와 따로 둡니다. 시험·과제를 구분에 계속 늘리지 않기 위함입니다. */
+export const CALENDAR_EVENT_CATEGORIES: CalendarEventCategory[] = ["출석수업", "학사", "스터디", "행사"];
+
 export type CalendarEvent = {
   id: string;
   date: string;
   endDate: string;
   title: string;
-  category: "학사" | "스터디" | "행사";
+  category: CalendarEventCategory;
   description: string;
   repeatCycle: CalendarRepeatCycle;
   campus: CalendarCampus;
   meetingMode: CalendarMeetingMode;
 };
+
+export function isCalendarEventCategory(value: string): value is CalendarEventCategory {
+  return CALENDAR_EVENT_CATEGORIES.includes(value as CalendarEventCategory);
+}
+
+/** 띄어쓰기 차이(출석 수업)도 출석수업으로 읽습니다. */
+export function parseCalendarEventCategory(value: unknown): CalendarEventCategory | null {
+  const compact = String(value ?? "").replace(/\s+/g, "");
+  return isCalendarEventCategory(compact) ? compact : null;
+}
+
+/** 예전에 학사로 넣은 출석수업도 화면에서는 출석수업으로 보이게 합니다. */
+export function calendarEventVisualCategory(event: Pick<CalendarEvent, "category" | "title" | "description">): CalendarEventCategory {
+  if (event.category === "출석수업") {
+    return "출석수업";
+  }
+  if (event.category === "학사" && /출석/.test(`${event.title} ${event.description}`)) {
+    return "출석수업";
+  }
+  return event.category;
+}
 
 export function isCalendarCampus(value: string): value is CalendarCampus {
   return CALENDAR_CAMPUSES.some((campus) => campus.value === value);
@@ -419,7 +445,8 @@ export function parseCalendarRepeatCycle(value: unknown): CalendarRepeatCycle | 
 
 /** 예전 문서에 반복·대학교·대면여부가 없으면, 하루/기간·공통·해당없음으로 읽습니다. */
 export function withDefaultCalendarRepeat(
-  event: Omit<CalendarEvent, "repeatCycle" | "campus" | "meetingMode"> & {
+  event: Omit<CalendarEvent, "repeatCycle" | "campus" | "meetingMode" | "category"> & {
+    category?: CalendarEventCategory | string;
     repeatCycle?: CalendarRepeatCycle | string;
     campus?: CalendarCampus | string;
     meetingMode?: CalendarMeetingMode | string;
@@ -430,6 +457,7 @@ export function withDefaultCalendarRepeat(
   const repeatCycle = parsed ?? (event.date === endDate ? "하루" : "기간");
   return {
     ...event,
+    category: parseCalendarEventCategory(event.category) ?? "학사",
     endDate: repeatCycle === "하루" ? event.date : endDate,
     repeatCycle,
     campus: parseCalendarCampus(event.campus) ?? "all",
@@ -490,15 +518,17 @@ export function formatCalendarEventMeta(event: CalendarEvent) {
   return parts.join(" · ");
 }
 
-/** 학사(시험·출석)가 스터디보다 위에 오도록 목록을 정렬합니다. */
-const CALENDAR_CATEGORY_SORT_RANK: Record<CalendarEvent["category"], number> = {
-  학사: 0,
-  행사: 1,
-  스터디: 2,
+/** 출석수업이 시험·스터디보다 위에 오도록 목록을 정렬합니다. */
+const CALENDAR_CATEGORY_SORT_RANK: Record<CalendarEventCategory, number> = {
+  출석수업: 0,
+  학사: 1,
+  행사: 2,
+  스터디: 3,
 };
 
 export function compareCalendarEventsForDisplay(left: CalendarEvent, right: CalendarEvent) {
-  const categoryDiff = CALENDAR_CATEGORY_SORT_RANK[left.category] - CALENDAR_CATEGORY_SORT_RANK[right.category];
+  const categoryDiff =
+    CALENDAR_CATEGORY_SORT_RANK[calendarEventVisualCategory(left)] - CALENDAR_CATEGORY_SORT_RANK[calendarEventVisualCategory(right)];
   if (categoryDiff !== 0) {
     return categoryDiff;
   }
@@ -513,17 +543,17 @@ export function sortCalendarEventsForDisplay(events: CalendarEvent[]) {
   return [...events].sort(compareCalendarEventsForDisplay);
 }
 
-/** 제목·설명에서 시험·출석·과제를 찾아, 카드에 붙일 강조 꼬리표를 고릅니다. */
+/** 제목·설명에서 시험·과제를 찾아, 카드에 붙일 강조 꼬리표를 고릅니다. 출석수업 구분은 뱃지 자체가 강조입니다. */
 export function calendarEventHighlightLabel(event: CalendarEvent) {
+  if (calendarEventVisualCategory(event) === "출석수업") {
+    return "";
+  }
   const text = `${event.title} ${event.description}`;
   if (/기말/.test(text)) {
     return "기말";
   }
   if (/중간/.test(text)) {
     return "중간";
-  }
-  if (/출석/.test(text)) {
-    return "출석수업";
   }
   if (/과제|마감/.test(text)) {
     return "과제 마감";
@@ -534,35 +564,38 @@ export function calendarEventHighlightLabel(event: CalendarEvent) {
   return "";
 }
 
-/** 달력 칸에 찍는 점. 학사는 주황이라 시험·출석 날이 한눈에 보입니다. */
-export type CalendarDayMark = "학사" | "스터디" | "행사" | "강의";
+/** 달력 칸에 찍는 점. 출석수업은 주황, 학사(시험·과제)는 호박색입니다. */
+export type CalendarDayMark = CalendarEventCategory | "강의";
 
-export const CALENDAR_DAY_MARK_ORDER: CalendarDayMark[] = ["학사", "스터디", "행사", "강의"];
+export const CALENDAR_DAY_MARK_ORDER: CalendarDayMark[] = ["출석수업", "학사", "스터디", "행사", "강의"];
 
 export function calendarDayMarks(
   events: CalendarEvent[],
   lectures: LectureSlot[],
   dateString: string,
   campusFilter: CalendarCampus,
-  categoryFilter: "all" | CalendarEvent["category"] = "all",
+  categoryFilter: "all" | CalendarEventCategory = "all",
 ): CalendarDayMark[] {
   const matchingEvents = events.filter((event) => {
     if (!calendarEventOccursOnDate(event, dateString) || !calendarEventMatchesCampus(event, campusFilter)) {
       return false;
     }
-    if (categoryFilter !== "all" && event.category !== categoryFilter) {
+    if (categoryFilter !== "all" && calendarEventVisualCategory(event) !== categoryFilter) {
       return false;
     }
     return true;
   });
   const marks: CalendarDayMark[] = [];
-  if (matchingEvents.some((event) => event.category === "학사")) {
+  if (matchingEvents.some((event) => calendarEventVisualCategory(event) === "출석수업")) {
+    marks.push("출석수업");
+  }
+  if (matchingEvents.some((event) => calendarEventVisualCategory(event) === "학사")) {
     marks.push("학사");
   }
-  if (matchingEvents.some((event) => event.category === "스터디")) {
+  if (matchingEvents.some((event) => calendarEventVisualCategory(event) === "스터디")) {
     marks.push("스터디");
   }
-  if (matchingEvents.some((event) => event.category === "행사")) {
+  if (matchingEvents.some((event) => calendarEventVisualCategory(event) === "행사")) {
     marks.push("행사");
   }
   const showLectures = categoryFilter === "all" || categoryFilter === "스터디";
@@ -571,8 +604,6 @@ export function calendarDayMarks(
   }
   return marks;
 }
-
-export const CALENDAR_EVENT_CATEGORIES: CalendarEvent["category"][] = ["학사", "스터디", "행사"];
 
 /** 방통대 학사 + BnB 일정을 한 캘린더에서 보기 위한 샘플 */
 export const CALENDAR_EVENTS: CalendarEvent[] = [
@@ -614,7 +645,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     date: "2026-10-10",
     endDate: "2026-10-10",
     title: "출석수업 기간",
-    category: "학사",
+    category: "출석수업",
     description: "방송대 공식 출석수업 기간입니다. 스터디 시간표가 일부 조정될 수 있습니다.",
     repeatCycle: "하루",
     campus: "all",

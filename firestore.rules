@@ -32,6 +32,8 @@
 // Document ID: 일정 ID
 // Fields:
 //   - id, date, endDate, title, category, campus, meetingMode, description, updatedAt
+//   - id, date, endDate, title, category, campus, meetingMode, description, updatedAt
+//   - category: 출석수업|학사|스터디|행사 (출석수업은 학사와 별도. 예전 문서는 학사만 있을 수 있음)
 //   - campus: all|seongsu|south|west (공통/성수/남부/서부. 예전 문서에는 없을 수 있음)
 //   - meetingMode: inPerson|online|none (대면/비대면/해당없음. 예전 문서에는 없을 수 있음)
 //   - repeatCycle: 하루|기간|매주|격주 (예전 문서에는 없을 수 있음. 없으면 하루/기간으로 읽음)
@@ -366,7 +368,7 @@ service cloud.firestore {
         && data.repeatCycle in ['하루', '기간', '매주', '격주']
         && (data.repeatCycle != '하루' || data.date == data.endDate)
         && validStringLength('title', 1, 80)
-        && data.category in ['학사', '스터디', '행사']
+        && data.category in ['출석수업', '학사', '스터디', '행사']
         && data.campus in ['all', 'seongsu', 'south', 'west']
         && data.meetingMode in ['inPerson', 'online', 'none']
         && validStringLength('description', 1, 200)

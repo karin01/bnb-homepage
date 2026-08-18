@@ -1,14 +1,20 @@
 import {
   calendarCampusLabel,
   calendarEventHighlightLabel,
+  calendarEventVisualCategory,
   calendarMeetingModeLabel,
   formatCalendarEventPeriod,
   type CalendarEvent,
 } from "@/data/schedule";
 import type { ReactNode } from "react";
 
-/** 학사는 주황, 스터디는 청록, 행사는 보라로 구분해 시험·출석이 묻히지 않게 합니다. */
+/** 출석수업은 주황, 학사(시험·과제)는 호박색, 스터디는 청록, 행사는 보라입니다. */
 const CATEGORY_THEME = {
+  출석수업: {
+    card: "border-orange-400 bg-orange-50 dark:border-orange-400/55 dark:bg-orange-400/10",
+    bar: "bg-orange-500",
+    badge: "bg-orange-500 text-navy-950",
+  },
   학사: {
     card: "border-amber-300 bg-amber-50 dark:border-amber-400/50 dark:bg-amber-400/10",
     bar: "bg-amber-500",
@@ -32,7 +38,8 @@ type CalendarEventCardProps = {
 };
 
 export function CalendarEventCard({ event, actions }: CalendarEventCardProps) {
-  const theme = CATEGORY_THEME[event.category];
+  const visualCategory = calendarEventVisualCategory(event);
+  const theme = CATEGORY_THEME[visualCategory];
   const highlightLabel = calendarEventHighlightLabel(event);
   const campusLabel = calendarCampusLabel(event.campus);
   const meetingLabel = event.meetingMode === "none" ? "" : calendarMeetingModeLabel(event.meetingMode);
@@ -44,7 +51,7 @@ export function CalendarEventCard({ event, actions }: CalendarEventCardProps) {
       <div className="flex flex-col gap-3 pl-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${theme.badge}`}>{event.category}</span>
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${theme.badge}`}>{visualCategory}</span>
             {highlightLabel ? (
               <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-semibold text-white">{highlightLabel}</span>
             ) : null}

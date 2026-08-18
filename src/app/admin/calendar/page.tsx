@@ -9,6 +9,7 @@ import {
   SEMESTER_END_DATE,
   SEMESTER_START_DATE,
   parseCalendarCampus,
+  calendarEventVisualCategory,
   sortCalendarEventsForDisplay,
   parseCalendarMeetingMode,
   parseCalendarRepeatCycle,
@@ -104,7 +105,7 @@ export default function AdminCalendarPage() {
         <h1 className="text-2xl font-semibold">학사·스터디 일정</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
           OT·과제 마감은 하루, 출석수업은 기간, 정기 모임은 매주/격주로 넣으면 됩니다. 매주 반복되는 정규 강의는 수업 시간표에서 등록합니다.
-          시험·출석·과제는 구분을 <strong className="font-semibold text-amber-700 dark:text-amber-300">학사</strong>로 두면 달력에서 주황색으로 먼저 보입니다.
+          시험·과제는 <strong className="font-semibold text-amber-700 dark:text-amber-300">학사</strong>, 방송대 출석수업은 <strong className="font-semibold text-orange-700 dark:text-orange-300">출석수업</strong>으로 넣으면 달력에서 색이 갈립니다. 시험·중간·기말을 구분 칸에 하나씩 더 넣지는 마세요.
         </p>
       </div>
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
@@ -248,7 +249,18 @@ export default function AdminCalendarPage() {
               event={item}
               actions={
                 <>
-                  <button type="button" onClick={() => setForm(withDefaultCalendarRepeat(item))} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
+                    <button
+                    type="button"
+                    onClick={() =>
+                      setForm(
+                        withDefaultCalendarRepeat({
+                          ...item,
+                          category: calendarEventVisualCategory(item),
+                        }),
+                      )
+                    }
+                    className="rounded-full border border-[var(--line)] px-3 py-1 text-sm"
+                  >
                     수정
                   </button>
                   <button

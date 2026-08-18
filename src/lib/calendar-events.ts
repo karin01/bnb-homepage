@@ -2,9 +2,9 @@ import { Timestamp, collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc
 import { getFirebaseDb } from "@/lib/firebase";
 import {
   CALENDAR_EVENTS,
-  CALENDAR_EVENT_CATEGORIES,
   isDateString,
   parseCalendarCampus,
+  parseCalendarEventCategory,
   parseCalendarMeetingMode,
   parseCalendarRepeatCycle,
   withDefaultCalendarRepeat,
@@ -14,7 +14,7 @@ import {
 const EVENT_COLLECTION = "calendarEvents";
 
 function isEventCategory(value: string): value is CalendarEvent["category"] {
-  return CALENDAR_EVENT_CATEGORIES.includes(value as CalendarEvent["category"]);
+  return parseCalendarEventCategory(value) !== null;
 }
 
 function toCalendarEvent(id: string, data: Record<string, unknown>): CalendarEvent | null {
