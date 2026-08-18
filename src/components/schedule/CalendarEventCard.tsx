@@ -11,22 +11,22 @@ import type { ReactNode } from "react";
 /** 출석수업은 주황, 학사(시험·과제)는 호박색, 스터디는 청록, 행사는 보라입니다. */
 const CATEGORY_THEME = {
   출석수업: {
-    card: "border-orange-400 bg-orange-50 dark:border-orange-400/55 dark:bg-orange-400/10",
+    card: "border-[var(--line)] bg-orange-50 dark:bg-orange-400/10",
     bar: "bg-orange-500",
     badge: "bg-orange-500 text-navy-950",
   },
   학사: {
-    card: "border-amber-300 bg-amber-50 dark:border-amber-400/50 dark:bg-amber-400/10",
+    card: "border-[var(--line)] bg-amber-50 dark:bg-amber-400/10",
     bar: "bg-amber-500",
     badge: "bg-amber-500 text-navy-950",
   },
   스터디: {
-    card: "border-cyan-300 bg-cyan-50 dark:border-cyan-400/40 dark:bg-cyan-400/10",
+    card: "border-[var(--line)] bg-cyan-50 dark:bg-cyan-400/10",
     bar: "bg-cyan-500",
     badge: "bg-cyan-500 text-navy-950",
   },
   행사: {
-    card: "border-violet-300 bg-violet-50 dark:border-violet-400/50 dark:bg-violet-400/10",
+    card: "border-[var(--line)] bg-violet-50 dark:bg-violet-400/10",
     bar: "bg-violet-500",
     badge: "bg-violet-500 text-white dark:text-navy-950",
   },

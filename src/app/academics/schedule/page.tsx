@@ -30,6 +30,20 @@ import { useMemo, useState } from "react";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
+/** 날짜 제목을 짧게 써서 필터와 한 줄을 다투지 않게 합니다. */
+function formatDayHeading(dateString: string) {
+  const [year, month, day] = dateString.split("-");
+  const monthNumber = Number(month);
+  const dayNumber = Number(day);
+  if (!year || Number.isNaN(monthNumber) || Number.isNaN(dayNumber)) {
+    return `${dateString} 일정`;
+  }
+  return `${monthNumber}월 ${dayNumber}일 일정`;
+}
+
+const TOOLBAR_CONTROL_CLASS =
+  "h-9 min-w-0 rounded-full border border-[var(--line)] bg-[var(--bg-elevated)] px-3 text-sm leading-9";
+
 export default function SchedulePage() {
   const { isAdmin } = useMembership();
   const { lectures } = useLectures();
@@ -166,18 +180,8 @@ export default function SchedulePage() {
         </article>
         <article className="glass-card rounded-3xl p-6">
           <div className="mb-4 grid gap-3">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="whitespace-nowrap text-lg font-semibold">{selectedDate} 일정</h2>
-              {isAdmin ? (
-                <Link
-                  href="/admin/calendar"
-                  className="shrink-0 rounded-full border border-[var(--line)] px-3 py-1.5 text-sm font-semibold text-cyan-700 dark:text-cyan-glow"
-                >
-                  일정 추가
-                </Link>
-              ) : null}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+            <h2 className="break-keep text-lg font-semibold">{formatDayHeading(selectedDate)}</h2>
+            <div className={`grid gap-2 ${isAdmin ? "grid-cols-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "grid-cols-2"}`}>
               <select
                 value={categoryFilter}
                 onChange={(event) => {
@@ -186,7 +190,7 @@ export default function SchedulePage() {
                     setCategoryFilter(value as "all" | CalendarEvent["category"]);
                   }
                 }}
-                className="h-9 min-w-0 rounded-full border border-[var(--line)] bg-transparent px-3 text-sm"
+                className={TOOLBAR_CONTROL_CLASS}
                 aria-label="일정 구분 필터"
               >
                 <option value="all">전체 구분</option>
@@ -204,7 +208,7 @@ export default function SchedulePage() {
                     setCampusFilter(nextCampus);
                   }
                 }}
-                className="h-9 min-w-0 rounded-full border border-[var(--line)] bg-transparent px-3 text-sm"
+                className={TOOLBAR_CONTROL_CLASS}
                 aria-label="대학교 필터"
               >
                 {CALENDAR_CAMPUSES.map((campus) => (
@@ -213,6 +217,14 @@ export default function SchedulePage() {
                   </option>
                 ))}
               </select>
+              {isAdmin ? (
+                <Link
+                  href="/admin/calendar"
+                  className={`${TOOLBAR_CONTROL_CLASS} col-span-2 inline-flex items-center justify-center whitespace-nowrap font-semibold text-cyan-700 sm:col-span-1 dark:text-cyan-glow`}
+                >
+                  일정 추가
+                </Link>
+              ) : null}
             </div>
           </div>
           <div className="grid gap-3">
@@ -226,7 +238,7 @@ export default function SchedulePage() {
                 {dayLectures.map((lecture) => (
                   <div
                     key={`${lecture.id}-${selectedDate}`}
-                    className="relative overflow-hidden rounded-2xl border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-500/30 dark:bg-sky-400/10"
+                    className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-sky-50/70 p-4 dark:bg-sky-400/10"
                   >
                     <span className="absolute inset-y-0 left-0 w-1.5 bg-sky-400" aria-hidden />
                     <p className="pl-2 text-xs font-semibold text-sky-700 dark:text-sky-300">

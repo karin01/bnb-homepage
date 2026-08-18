@@ -55,6 +55,14 @@ textarea {
   background-color: var(--bg-elevated);
 }
 
+/* 윈도우 기본 초점이 검은 테두리를 그려, 옆 칸과 선이 어긋져 보입니다. */
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 select option:checked,
 select option:hover {
   background-color: color-mix(in oklab, var(--accent) 28%, var(--bg-elevated));
