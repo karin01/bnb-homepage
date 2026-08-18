@@ -1,0 +1,792 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: members
+// Document ID: Firebase Auth uid
+// Fields:
+//   - uid: string (required, immutable, == Auth uid)
+//   - loginId: string (required, immutable, 4-20 영문숫자)
+//   - name: string (required, 1-40)
+//   - studentId: string (required, 1-20)
+//   - grade: string (required, 1|2|3|4|transfer|ob)
+//   - cohort: int (optional on old docs, required on signup, 1-80)
+//   - email: string (required, immutable, 유효 이메일, 1-80)
+//   - phone: string (required, 9-20)
+//   - role: string (required, site|study|admin)
+//   - status: string (optional, active|blocked|withdrawn, 없으면 active)
+//   - lastLoginAt: timestamp (optional)
+//   - createdAt: timestamp (required, immutable)
+//
+// Collection: loginAliases
+// Document ID: loginId 소문자
+// Fields:
+//   - uid: string (required, immutable)
+//   - loginId: string (required, immutable, 문서 ID와 동일)
+//   - email: string (required, immutable)
+//   - createdAt: timestamp (required, immutable)
+// 로그인 전 아이디→이메일 조회를 위해 get만 허용하고 list는 막습니다.
+// 운영진 회원 추가 시 다른 uid의 alias 생성을 허용합니다.
+//
+// Collection: calendarEvents
+// Document ID: 일정 ID
+// Fields:
+//   - id, date, endDate, title, category, description, updatedAt
+//   - repeatCycle: 하루|기간|매주|격주 (예전 문서에는 없을 수 있음. 없으면 하루/기간으로 읽음)
+// 공개 달력 안내라 비로그인 읽기를 허용합니다.
+//
+// Collection: boards
+// Document ID: 게시판 ID (영문 소문자 시작, 2-20)
+// Fields:
+//   - id, group, title, description, skin, order, readRole, writeRole
+//   - commentEnabled, searchEnabled, hidden, updatedAt
+// 게시판 설정에는 개인정보가 없어 읽기를 허용합니다.
+//
+// Collection: posts
+// Document ID: 게시글 ID
+// Fields:
+//   - id, boardId, title, body, authorUid, authorName, isNotice
+//   - imageUrl(optional), storagePath(optional), images(optional, 최대 10장), createdAt, updatedAt
+// 읽기/쓰기는 해당 게시판의 readRole / writeRole을 따릅니다.
+//
+// Collection: comments
+// Document ID: 댓글 ID
+// Fields:
+//   - id, boardId, postId, body, authorUid, authorName, createdAt
+//
+// Collection: shareNotes
+// Document ID: note-시각-난수
+// Fields:
+//   - id, room(1|2|3|4|club), title, body(0~8000), tags(1~8), uploaderUid, uploaderName
+//   - fileName, storagePath, fileSize, contentType, createdAt, updatedAt
+// 목록은 공개, 올리기/받기는 로그인 회원, 삭제는 본인 또는 운영진입니다.
+//
+// Collection: siteSecurity
+// Document ID: guestAccess 하나만 사용
+// Fields:
+//   - blockOverseas, allowedCountryCodes, maxGuestPostsPerHour
+//   - maxGuestCommentsPerHour, floodCount, floodWindowMinutes, updatedAt
+// 비가입자 글쓰기 정책이라 읽기는 공개, 쓰기는 운영진만 허용합니다.
+//
+// Collection: blockedIps
+// Document ID: ip-주소(특수문자는 -)
+// Fields:
+//   - ip, reason, active, createdAt, createdByName
+// 차단 목록 조회는 서버 검사에 필요해 읽기를 허용하고, 쓰기는 운영진만 허용합니다.
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isBootstrapAdmin() {
+      return isAuthenticated()
+        && request.auth.token.email == 'jungwon1023@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function memberRole() {
+      return get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin()
+        || (isAuthenticated()
+          && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+          && memberRole() == 'admin');
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string
+        && request.resource.data[field].size() >= minLen
+        && request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidEmail(email) {
+      return email is string
+        && email.size() <= 80
+        && email.matches('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$');
+    }
+
+    function isValidClock(value) {
+      return value is string && value.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$');
+    }
+
+    function isValidScheduleGrade(value) {
+      return (value is int && value >= 1 && value <= 4) || value == 'club';
+    }
+
+    function isRecentTimestamp(value) {
+      return value is timestamp
+        && value > request.time - duration.value(5, 'm')
+        && value <= request.time + duration.value(1, 'm');
+    }
+
+    function canAccessRole(required) {
+      return required == 'guest'
+        || isAdmin()
+        || (isAuthenticated()
+          && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+          && (
+            (required == 'site' && memberRole() in ['site', 'study', 'admin'])
+            || (required == 'study' && memberRole() in ['study', 'admin'])
+            || (required == 'admin' && memberRole() == 'admin')
+          ));
+    }
+
+    // 비가입자 글·댓글에만 쓰는 임시 작성자 ID. 예: guest-1755514800000
+    function isGuestAuthorId(value) {
+      return value is string && value.matches('^guest-[0-9]{10,20}$');
+    }
+
+    // 비가입자는 Storage 업로드가 없어, 사진 파일 경로를 비워 둡니다.
+    function guestPostHasNoUploads(data) {
+      return (!('storagePath' in data) || data.storagePath == '')
+        && (
+          !('images' in data)
+          || data.images.size() == 0
+          || (
+            (data.images.size() < 1 || data.images[0].storagePath == '')
+            && (data.images.size() < 2 || data.images[1].storagePath == '')
+            && (data.images.size() < 3 || data.images[2].storagePath == '')
+            && (data.images.size() < 4 || data.images[3].storagePath == '')
+            && (data.images.size() < 5 || data.images[4].storagePath == '')
+            && (data.images.size() < 6 || data.images[5].storagePath == '')
+            && (data.images.size() < 7 || data.images[6].storagePath == '')
+            && (data.images.size() < 8 || data.images[7].storagePath == '')
+            && (data.images.size() < 9 || data.images[8].storagePath == '')
+            && (data.images.size() < 10 || data.images[9].storagePath == '')
+          )
+        );
+    }
+
+    function memberRequiredFields() {
+      return ['uid', 'loginId', 'name', 'studentId', 'grade', 'email', 'phone', 'role', 'createdAt'];
+    }
+
+    function memberFields() {
+      return memberRequiredFields().concat(['cohort', 'status', 'lastLoginAt']);
+    }
+
+    function isValidMember(data) {
+      return hasOnlyAllowedFields(memberFields())
+        && hasRequiredFields(memberRequiredFields())
+        && data.uid is string
+        && data.uid.size() >= 8
+        && data.uid.size() <= 128
+        && validStringLength('loginId', 4, 20)
+        && data.loginId.matches('^[a-zA-Z0-9]{4,20}$')
+        && validStringLength('name', 1, 40)
+        && validStringLength('studentId', 1, 20)
+        && data.grade in ['1', '2', '3', '4', 'transfer', 'ob']
+        && isValidEmail(data.email)
+        && validStringLength('phone', 9, 20)
+        && data.role in ['site', 'study', 'admin']
+        && data.createdAt is timestamp
+        && (!('cohort' in data) || (data.cohort is int && data.cohort >= 1 && data.cohort <= 80))
+        && (!('status' in data) || data.status in ['active', 'blocked', 'withdrawn'])
+        && (!('lastLoginAt' in data) || data.lastLoginAt is timestamp);
+    }
+
+    function memberIdentityUnchanged() {
+      return request.resource.data.uid == resource.data.uid
+        && request.resource.data.loginId == resource.data.loginId
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function currentMemberStatus() {
+      return ('status' in resource.data && resource.data.status in ['active', 'blocked', 'withdrawn'])
+        ? resource.data.status
+        : 'active';
+    }
+
+    function nextMemberStatus() {
+      return ('status' in request.resource.data && request.resource.data.status in ['active', 'blocked', 'withdrawn'])
+        ? request.resource.data.status
+        : 'active';
+    }
+
+    function aliasFields() {
+      return ['uid', 'loginId', 'email', 'createdAt'];
+    }
+
+    function isValidLoginAlias(data, loginId) {
+      return hasOnlyAllowedFields(aliasFields())
+        && hasRequiredFields(aliasFields())
+        && data.uid is string
+        && data.uid.size() >= 8
+        && data.uid.size() <= 128
+        && data.loginId == loginId
+        && data.loginId.matches('^[a-zA-Z0-9]{4,20}$')
+        && isValidEmail(data.email)
+        && data.createdAt is timestamp;
+    }
+
+    function lectureFields() {
+      return ['id', 'grade', 'subject', 'instructor', 'weekday', 'startTime', 'endTime', 'startDate', 'endDate', 'repeatCycle', 'room', 'type', 'updatedAt'];
+    }
+
+    function isValidDateString(value) {
+      return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function isValidLecture(data, lectureId) {
+      return hasOnlyAllowedFields(lectureFields())
+        && hasRequiredFields(lectureFields())
+        && data.id == lectureId
+        && validStringLength('id', 1, 40)
+        && isValidScheduleGrade(data.grade)
+        && validStringLength('subject', 1, 80)
+        && validStringLength('instructor', 1, 40)
+        && data.weekday in ['월', '화', '수', '목', '금', '토', '일']
+        && isValidClock(data.startTime)
+        && isValidClock(data.endTime)
+        && isValidDateString(data.startDate)
+        && isValidDateString(data.endDate)
+        && data.endDate >= data.startDate
+        && data.repeatCycle in ['매주', '격주', '한번']
+        && (data.repeatCycle != '한번' || data.startDate == data.endDate)
+        && data.room in ['실습실', '강의실']
+        && data.type in ['정규', '특강', '오픈수업', '소모임']
+        && data.updatedAt is timestamp;
+    }
+
+    function subjectRequiredFields() {
+      return ['id', 'name', 'grade', 'updatedAt'];
+    }
+
+    function subjectFields() {
+      return subjectRequiredFields().concat(['summary', 'status', 'capacity', 'hidden']);
+    }
+
+    function isValidSubject(data, subjectId) {
+      return hasOnlyAllowedFields(subjectFields())
+        && hasRequiredFields(subjectRequiredFields())
+        && data.id == subjectId
+        && validStringLength('id', 1, 40)
+        && validStringLength('name', 1, 80)
+        && isValidScheduleGrade(data.grade)
+        && data.updatedAt is timestamp
+        && (!('summary' in data) || (data.summary is string && data.summary.size() <= 200))
+        && (!('status' in data) || data.status in ['모집중', '진행중', '시즌 운영', '대기', '친목', ''])
+        && (!('capacity' in data) || (data.capacity is string && data.capacity.size() <= 20))
+        && (!('hidden' in data) || data.hidden is bool);
+    }
+
+    match /members/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isValidMember(request.resource.data)
+        && request.resource.data.uid == userId
+        && request.resource.data.cohort is int
+        && request.resource.data.cohort >= 1
+        && request.resource.data.cohort <= 80
+        && isRecentTimestamp(request.resource.data.createdAt)
+        && (
+          (
+            isOwner(userId)
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.role == 'site'
+            && request.resource.data.email == request.auth.token.email
+            && (!('status' in request.resource.data) || request.resource.data.status == 'active')
+            && !('lastLoginAt' in request.resource.data)
+          )
+          || isAdmin()
+        );
+
+      allow update: if isValidMember(request.resource.data)
+        && memberIdentityUnchanged()
+        && (
+          (
+            isOwner(userId)
+            && request.resource.data.role == resource.data.role
+            && nextMemberStatus() == currentMemberStatus()
+          )
+          || isAdmin()
+        );
+
+      allow delete: if false;
+    }
+
+    match /loginAliases/{loginId} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if isValidLoginAlias(request.resource.data, loginId)
+        && isRecentTimestamp(request.resource.data.createdAt)
+        && (
+          (
+            isAuthenticated()
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.email == request.auth.token.email
+          )
+          || isAdmin()
+        );
+
+      allow update, delete: if false;
+    }
+
+    match /lectures/{lectureId} {
+      allow read: if true;
+
+      allow create, update: if isAdmin()
+        && isValidLecture(request.resource.data, lectureId)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if isAdmin();
+    }
+
+    function isValidCalendarEvent(data, eventId) {
+      return hasOnlyAllowedFields(['id', 'date', 'endDate', 'title', 'category', 'description', 'repeatCycle', 'updatedAt'])
+        && hasRequiredFields(['id', 'date', 'endDate', 'title', 'category', 'description', 'repeatCycle', 'updatedAt'])
+        && data.id == eventId
+        && validStringLength('id', 1, 40)
+        && isValidDateString(data.date)
+        && isValidDateString(data.endDate)
+        && data.endDate >= data.date
+        && data.repeatCycle in ['하루', '기간', '매주', '격주']
+        && (data.repeatCycle != '하루' || data.date == data.endDate)
+        && validStringLength('title', 1, 80)
+        && data.category in ['학사', '스터디', '행사']
+        && validStringLength('description', 1, 200)
+        && data.updatedAt is timestamp;
+    }
+
+    match /subjects/{subjectId} {
+      allow read: if isAdmin() || resource.data.grade == 'club';
+
+      allow create, update: if isAdmin()
+        && isValidSubject(request.resource.data, subjectId)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if isAdmin();
+    }
+
+    function isValidResource(data, resourceId) {
+      return hasOnlyAllowedFields(['id', 'grade', 'title', 'subject', 'year', 'semester', 'kind', 'date', 'fileName', 'storagePath', 'fileSize', 'contentType', 'updatedAt'])
+        && hasRequiredFields(['id', 'grade', 'title', 'subject', 'year', 'semester', 'kind', 'date', 'fileName', 'storagePath', 'fileSize', 'contentType', 'updatedAt'])
+        && data.id == resourceId
+        && validStringLength('id', 1, 40)
+        && data.grade is int
+        && data.grade >= 1
+        && data.grade <= 4
+        && validStringLength('title', 1, 80)
+        && validStringLength('subject', 1, 80)
+        && data.year is int
+        && data.year >= 1990
+        && data.year <= 2035
+        && data.semester in ['1', '2']
+        && data.kind in ['실습', '강의록', '과제', '기출']
+        && isValidDateString(data.date)
+        && validStringLength('fileName', 1, 80)
+        && validStringLength('storagePath', 1, 200)
+        && data.storagePath.matches('^resources/' + resourceId + '/.+')
+        && data.fileSize is int
+        && data.fileSize > 0
+        && data.fileSize <= 20971520
+        && validStringLength('contentType', 1, 80)
+        && data.updatedAt is timestamp;
+    }
+
+    match /calendarEvents/{eventId} {
+      allow read: if true;
+
+      allow create, update: if isAdmin()
+        && isValidCalendarEvent(request.resource.data, eventId)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if isAdmin();
+    }
+
+    match /resources/{resourceId} {
+      allow read: if true;
+
+      allow create, update: if isAdmin()
+        && isValidResource(request.resource.data, resourceId)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if isAdmin();
+    }
+
+    function isValidShareNoteTag(value) {
+      return value is string && value.size() >= 1 && value.size() <= 20;
+    }
+
+    function isValidShareNoteTags(value) {
+      return value is list
+        && value.size() >= 1
+        && value.size() <= 8
+        && isValidShareNoteTag(value[0])
+        && (value.size() < 2 || isValidShareNoteTag(value[1]))
+        && (value.size() < 3 || isValidShareNoteTag(value[2]))
+        && (value.size() < 4 || isValidShareNoteTag(value[3]))
+        && (value.size() < 5 || isValidShareNoteTag(value[4]))
+        && (value.size() < 6 || isValidShareNoteTag(value[5]))
+        && (value.size() < 7 || isValidShareNoteTag(value[6]))
+        && (value.size() < 8 || isValidShareNoteTag(value[7]));
+    }
+
+    function shareNoteFields() {
+      return ['id', 'room', 'title', 'body', 'tags', 'uploaderUid', 'uploaderName', 'fileName', 'storagePath', 'fileSize', 'contentType', 'createdAt', 'updatedAt'];
+    }
+
+    function isValidShareNote(data, noteId) {
+      return hasOnlyAllowedFields(shareNoteFields())
+        && hasRequiredFields(shareNoteFields())
+        && data.id == noteId
+        && validStringLength('id', 1, 40)
+        && data.room in ['1', '2', '3', '4', 'club']
+        && validStringLength('title', 1, 80)
+        && data.body is string
+        && data.body.size() <= 8000
+        && isValidShareNoteTags(data.tags)
+        && data.uploaderUid is string
+        && data.uploaderUid.size() >= 8
+        && data.uploaderUid.size() <= 128
+        && validStringLength('uploaderName', 1, 40)
+        && validStringLength('fileName', 1, 80)
+        && validStringLength('storagePath', 1, 200)
+        && data.storagePath.matches('^share-notes/' + noteId + '/.+')
+        && data.fileSize is int
+        && data.fileSize > 0
+        && data.fileSize <= 20971520
+        && validStringLength('contentType', 1, 80)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /shareNotes/{noteId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated()
+        && isValidShareNote(request.resource.data, noteId)
+        && request.resource.data.uploaderUid == request.auth.uid
+        && isRecentTimestamp(request.resource.data.createdAt)
+        && isRecentTimestamp(request.resource.data.updatedAt)
+        && (isAdmin() || canAccessRole('site'));
+
+      allow update: if (isAdmin() || isOwner(resource.data.uploaderUid))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'body', 'tags', 'updatedAt'])
+        && validStringLength('title', 1, 80)
+        && request.resource.data.body is string
+        && request.resource.data.body.size() <= 8000
+        && isValidShareNoteTags(request.resource.data.tags)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if isAdmin() || isOwner(resource.data.uploaderUid);
+    }
+
+    function isValidCountryCodeValue(value) {
+      return value is string && value.matches('^[A-Z]{2}$');
+    }
+
+    function isValidCountryCodes(value) {
+      return value is list
+        && value.size() >= 1
+        && value.size() <= 12
+        && isValidCountryCodeValue(value[0])
+        && (value.size() < 2 || isValidCountryCodeValue(value[1]))
+        && (value.size() < 3 || isValidCountryCodeValue(value[2]))
+        && (value.size() < 4 || isValidCountryCodeValue(value[3]))
+        && (value.size() < 5 || isValidCountryCodeValue(value[4]))
+        && (value.size() < 6 || isValidCountryCodeValue(value[5]))
+        && (value.size() < 7 || isValidCountryCodeValue(value[6]))
+        && (value.size() < 8 || isValidCountryCodeValue(value[7]))
+        && (value.size() < 9 || isValidCountryCodeValue(value[8]))
+        && (value.size() < 10 || isValidCountryCodeValue(value[9]))
+        && (value.size() < 11 || isValidCountryCodeValue(value[10]))
+        && (value.size() < 12 || isValidCountryCodeValue(value[11]));
+    }
+
+    function guestAccessSettingsFields() {
+      return ['blockOverseas', 'allowedCountryCodes', 'maxGuestPostsPerHour', 'maxGuestCommentsPerHour', 'floodCount', 'floodWindowMinutes', 'updatedAt'];
+    }
+
+    function isValidGuestAccessSettings(data) {
+      return hasOnlyAllowedFields(guestAccessSettingsFields())
+        && hasRequiredFields(guestAccessSettingsFields())
+        && data.blockOverseas is bool
+        && isValidCountryCodes(data.allowedCountryCodes)
+        && data.maxGuestPostsPerHour is int
+        && data.maxGuestPostsPerHour >= 1
+        && data.maxGuestPostsPerHour <= 60
+        && data.maxGuestCommentsPerHour is int
+        && data.maxGuestCommentsPerHour >= 1
+        && data.maxGuestCommentsPerHour <= 120
+        && data.floodCount is int
+        && data.floodCount >= 3
+        && data.floodCount <= 50
+        && data.floodWindowMinutes is int
+        && data.floodWindowMinutes >= 1
+        && data.floodWindowMinutes <= 180
+        && data.updatedAt is timestamp;
+    }
+
+    function blockedIpFields() {
+      return ['ip', 'reason', 'active', 'createdAt', 'createdByName'];
+    }
+
+    function isValidBlockedIp(data) {
+      return hasOnlyAllowedFields(blockedIpFields())
+        && hasRequiredFields(blockedIpFields())
+        && data.ip is string
+        && data.ip.size() >= 3
+        && data.ip.size() <= 45
+        && (
+          data.ip.matches('^([0-9]{1,3}\\.){3}[0-9]{1,3}$')
+          || data.ip.matches('^[0-9a-fA-F:]+$')
+        )
+        && data.reason is string
+        && data.reason.size() <= 80
+        && data.active is bool
+        && data.createdAt is timestamp
+        && validStringLength('createdByName', 1, 40);
+    }
+
+    match /siteSecurity/{docId} {
+      allow read: if true;
+
+      allow create, update: if isAdmin()
+        && docId == 'guestAccess'
+        && isValidGuestAccessSettings(request.resource.data)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if false;
+    }
+
+    match /blockedIps/{blockId} {
+      allow read: if true;
+
+      allow create, update: if isAdmin()
+        && isValidBlockedIp(request.resource.data)
+        && isRecentTimestamp(request.resource.data.createdAt);
+
+      allow delete: if isAdmin();
+    }
+
+    function isValidBoardId(value) {
+      return value is string && value.matches('^[a-z][a-z0-9_-]{1,19}$');
+    }
+
+    function boardFields() {
+      return ['id', 'group', 'title', 'description', 'skin', 'order', 'readRole', 'writeRole', 'commentEnabled', 'searchEnabled', 'hidden', 'updatedAt'];
+    }
+
+    function isValidBoard(data, boardId) {
+      return hasOnlyAllowedFields(boardFields())
+        && hasRequiredFields(boardFields())
+        && data.id == boardId
+        && isValidBoardId(data.id)
+        && data.group in ['커뮤니티', '자료실']
+        && validStringLength('title', 1, 40)
+        && validStringLength('description', 0, 120)
+        && data.skin in ['list', 'gallery']
+        && data.order is int
+        && data.order >= 1
+        && data.order <= 999
+        && data.readRole in ['guest', 'site', 'study', 'admin']
+        && data.writeRole in ['guest', 'site', 'study', 'admin']
+        && data.commentEnabled is bool
+        && data.searchEnabled is bool
+        && data.hidden is bool
+        && data.updatedAt is timestamp;
+    }
+
+    match /boards/{boardId} {
+      allow read: if true;
+
+      allow create, update: if isAdmin()
+        && isValidBoard(request.resource.data, boardId)
+        && isRecentTimestamp(request.resource.data.updatedAt);
+
+      allow delete: if isAdmin();
+    }
+
+    function postRequiredFields() {
+      return ['id', 'boardId', 'title', 'body', 'authorUid', 'authorName', 'isNotice', 'createdAt', 'updatedAt'];
+    }
+
+    function postFields() {
+      return postRequiredFields().concat(['imageUrl', 'storagePath', 'images']);
+    }
+
+    function isValidPostImagePath(storagePath, postId) {
+      return storagePath is string
+        && storagePath.size() <= 200
+        && (
+          storagePath == ''
+          || storagePath.matches('^posts/' + postId + '/.{1,120}$')
+        );
+    }
+
+    function isValidPostImageItem(item, postId) {
+      return item is map
+        && item.keys().hasOnly(['imageUrl', 'storagePath'])
+        && item.imageUrl is string
+        && item.imageUrl.size() >= 8
+        && item.imageUrl.size() <= 800
+        && isValidPostImagePath(item.storagePath, postId);
+    }
+
+    function isValidPostImages(images, postId) {
+      return images is list
+        && images.size() <= 10
+        && (images.size() < 1 || isValidPostImageItem(images[0], postId))
+        && (images.size() < 2 || isValidPostImageItem(images[1], postId))
+        && (images.size() < 3 || isValidPostImageItem(images[2], postId))
+        && (images.size() < 4 || isValidPostImageItem(images[3], postId))
+        && (images.size() < 5 || isValidPostImageItem(images[4], postId))
+        && (images.size() < 6 || isValidPostImageItem(images[5], postId))
+        && (images.size() < 7 || isValidPostImageItem(images[6], postId))
+        && (images.size() < 8 || isValidPostImageItem(images[7], postId))
+        && (images.size() < 9 || isValidPostImageItem(images[8], postId))
+        && (images.size() < 10 || isValidPostImageItem(images[9], postId));
+    }
+
+    function isValidPost(data, postId) {
+      return hasOnlyAllowedFields(postFields())
+        && hasRequiredFields(postRequiredFields())
+        && data.id == postId
+        && validStringLength('id', 1, 40)
+        && isValidBoardId(data.boardId)
+        && validStringLength('title', 1, 80)
+        && validStringLength('body', 1, 8000)
+        && data.authorUid is string
+        && data.authorUid.size() >= 8
+        && data.authorUid.size() <= 128
+        && validStringLength('authorName', 1, 40)
+        && data.isNotice is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 800))
+        && (!('storagePath' in data) || isValidPostImagePath(data.storagePath, postId))
+        && (!('images' in data) || isValidPostImages(data.images, postId));
+    }
+
+    function existingPostBoard() {
+      return get(/databases/$(database)/documents/boards/$(resource.data.boardId)).data;
+    }
+
+    function requestPostBoard() {
+      return get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data;
+    }
+
+    match /posts/{postId} {
+      allow read: if isAdmin()
+        || (
+          exists(/databases/$(database)/documents/boards/$(resource.data.boardId))
+          && canAccessRole(existingPostBoard().readRole)
+        );
+
+      allow create: if isValidPost(request.resource.data, postId)
+        && exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId))
+        && isRecentTimestamp(request.resource.data.createdAt)
+        && isRecentTimestamp(request.resource.data.updatedAt)
+        && (
+          (
+            isAuthenticated()
+            && request.resource.data.authorUid == request.auth.uid
+            && canAccessRole(requestPostBoard().writeRole)
+            && (request.resource.data.isNotice == false || isAdmin())
+          )
+          || (
+            request.auth == null
+            && requestPostBoard().writeRole == 'guest'
+            && isGuestAuthorId(request.resource.data.authorUid)
+            && request.resource.data.isNotice == false
+            && guestPostHasNoUploads(request.resource.data)
+          )
+        );
+
+      allow update: if isValidPost(request.resource.data, postId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.boardId == resource.data.boardId
+        && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.authorName == resource.data.authorName
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isRecentTimestamp(request.resource.data.updatedAt)
+        && (
+          isAdmin()
+          || (
+            isOwner(resource.data.authorUid)
+            && request.resource.data.isNotice == resource.data.isNotice
+            && exists(/databases/$(database)/documents/boards/$(resource.data.boardId))
+            && canAccessRole(existingPostBoard().writeRole)
+          )
+        );
+
+      allow delete: if isAdmin() || isOwner(resource.data.authorUid);
+    }
+
+    function commentFields() {
+      return ['id', 'boardId', 'postId', 'body', 'authorUid', 'authorName', 'createdAt'];
+    }
+
+    function isValidComment(data, commentId) {
+      return hasOnlyAllowedFields(commentFields())
+        && hasRequiredFields(commentFields())
+        && data.id == commentId
+        && validStringLength('id', 1, 40)
+        && isValidBoardId(data.boardId)
+        && validStringLength('postId', 1, 40)
+        && validStringLength('body', 1, 500)
+        && data.authorUid is string
+        && data.authorUid.size() >= 8
+        && data.authorUid.size() <= 128
+        && validStringLength('authorName', 1, 40)
+        && data.createdAt is timestamp;
+    }
+
+    match /comments/{commentId} {
+      allow read: if isAdmin()
+        || (
+          exists(/databases/$(database)/documents/boards/$(resource.data.boardId))
+          && canAccessRole(get(/databases/$(database)/documents/boards/$(resource.data.boardId)).data.readRole)
+        );
+
+      allow create: if isValidComment(request.resource.data, commentId)
+        && isRecentTimestamp(request.resource.data.createdAt)
+        && exists(/databases/$(database)/documents/boards/$(request.resource.data.boardId))
+        && exists(/databases/$(database)/documents/posts/$(request.resource.data.postId))
+        && get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.boardId == request.resource.data.boardId
+        && get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.commentEnabled == true
+        && canAccessRole(get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.readRole)
+        && (
+          (
+            isAuthenticated()
+            && request.resource.data.authorUid == request.auth.uid
+            && canAccessRole('site')
+          )
+          || (
+            request.auth == null
+            && get(/databases/$(database)/documents/boards/$(request.resource.data.boardId)).data.writeRole == 'guest'
+            && isGuestAuthorId(request.resource.data.authorUid)
+          )
+        );
+
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner(resource.data.authorUid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

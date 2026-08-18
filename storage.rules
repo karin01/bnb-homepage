@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 자료실 파일. 목록에 올리는 것은 Firestore 운영진 규칙이 담당합니다.
+    // Storage는 Firestore 역할을 못 보므로, 로그인한 회원만 올리게 둡니다.
+    match /resources/{resourceId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated()
+        && resourceId.matches('^[a-zA-Z0-9_-]{1,40}$')
+        && request.resource.size > 0
+        && request.resource.size <= 20 * 1024 * 1024;
+      allow delete: if isAuthenticated();
+    }
+
+    // 게시글 사진. 로그인한 사용자만 올리고 지울 수 있습니다.
+    match /posts/{postId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+        && postId.matches('^[a-zA-Z0-9_-]{1,40}$')
+        && request.resource.size <= 8 * 1024 * 1024;
+    }
+
+    // 쉐어노트. 받기는 로그인 회원, 올리기/삭제도 로그인 회원입니다.
+    match /share-notes/{noteId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated()
+        && noteId.matches('^[a-zA-Z0-9_-]{1,40}$')
+        && request.resource.size > 0
+        && request.resource.size <= 20 * 1024 * 1024;
+      allow delete: if isAuthenticated();
+    }
+  }
+}

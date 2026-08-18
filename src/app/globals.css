@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* next-themes가 html에 .dark 클래스를 붙이면 이 변형이 동작합니다. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-noto-sans-kr), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --color-navy-950: #050816;
+  --color-navy-900: #0b1220;
+  --color-navy-800: #111b2e;
+  --color-navy-700: #1a2744;
+  --color-cyan-glow: #22d3ee;
+  --color-bit-blue: #38bdf8;
+}
+
+:root {
+  --bg: #f4f7fb;
+  --bg-elevated: #ffffff;
+  --text: #0b1220;
+  --text-muted: #4b5875;
+  --line: rgba(15, 23, 42, 0.1);
+  --accent: #0284c7;
+  --glow: rgba(14, 165, 233, 0.18);
+}
+
+.dark {
+  --bg: #050816;
+  --bg-elevated: #0f1a2e;
+  --text: #e8f1ff;
+  --text-muted: #9fb0c9;
+  --line: rgba(148, 197, 255, 0.12);
+  --accent: #22d3ee;
+  --glow: rgba(34, 211, 238, 0.16);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+/* 개발자 감성의 점 그리드 배경 */
+.grid-bg {
+  background-image:
+    radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--accent) 22%, transparent) 1px, transparent 0);
+  background-size: 28px 28px;
+}
+
+.glass-card {
+  background: color-mix(in oklab, var(--bg-elevated) 86%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px -28px var(--glow);
+  backdrop-filter: blur(16px);
+}
+
+.hero-glow {
+  background:
+    radial-gradient(900px 420px at 18% -10%, color-mix(in oklab, var(--accent) 28%, transparent), transparent 60%),
+    radial-gradient(700px 380px at 92% 8%, rgba(59, 130, 246, 0.22), transparent 55%);
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker 28s linear infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 0.6s ease both;
+}
