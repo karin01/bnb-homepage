@@ -31,7 +31,8 @@
 // Collection: calendarEvents
 // Document ID: 일정 ID
 // Fields:
-//   - id, date, endDate, title, category, description, updatedAt
+//   - id, date, endDate, title, category, campus, description, updatedAt
+//   - campus: all|seongsu|south|west (공통/성수/남부/서부. 예전 문서에는 없을 수 있음)
 //   - repeatCycle: 하루|기간|매주|격주 (예전 문서에는 없을 수 있음. 없으면 하루/기간으로 읽음)
 // 공개 달력 안내라 비로그인 읽기를 허용합니다.
 //
@@ -354,8 +355,8 @@ service cloud.firestore {
     }
 
     function isValidCalendarEvent(data, eventId) {
-      return hasOnlyAllowedFields(['id', 'date', 'endDate', 'title', 'category', 'description', 'repeatCycle', 'updatedAt'])
-        && hasRequiredFields(['id', 'date', 'endDate', 'title', 'category', 'description', 'repeatCycle', 'updatedAt'])
+      return hasOnlyAllowedFields(['id', 'date', 'endDate', 'title', 'category', 'campus', 'description', 'repeatCycle', 'updatedAt'])
+        && hasRequiredFields(['id', 'date', 'endDate', 'title', 'category', 'campus', 'description', 'repeatCycle', 'updatedAt'])
         && data.id == eventId
         && validStringLength('id', 1, 40)
         && isValidDateString(data.date)
@@ -365,6 +366,7 @@ service cloud.firestore {
         && (data.repeatCycle != '하루' || data.date == data.endDate)
         && validStringLength('title', 1, 80)
         && data.category in ['학사', '스터디', '행사']
+        && data.campus in ['all', 'seongsu', 'south', 'west']
         && validStringLength('description', 1, 200)
         && data.updatedAt is timestamp;
     }
