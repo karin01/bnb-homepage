@@ -537,15 +537,15 @@ export default function AdminSchedulePage() {
             </button>
           ) : null}
         </div>
-        <div className="mt-4 grid gap-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {lectures.map((lecture) => (
-            <div key={lecture.id} className="flex flex-col gap-2 rounded-2xl border border-[var(--line)] px-4 py-3 md:flex-row md:items-center md:justify-between">
-              <div>
+            <div key={lecture.id} className="flex h-full flex-col gap-3 rounded-2xl border border-[var(--line)] px-4 py-3">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-cyan-700 dark:text-cyan-glow">
                   {gradeLabel(lecture.grade)} · {lecture.type} · {lecture.room}
                 </p>
-                <p className="font-medium">{lecture.subject}</p>
-                <p className="text-sm text-[var(--text-muted)]">
+                <p className="mt-2 font-semibold tracking-tight break-keep">{lecture.subject}</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)] break-keep">
                   {formatLectureWhen(lecture)} · {formatLecturePeriod(lecture)} · 강사 {lecture.instructor}
                 </p>
               </div>
@@ -553,7 +553,11 @@ export default function AdminSchedulePage() {
                 <button type="button" onClick={() => onEdit(lecture)} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
                   수정
                 </button>
-                <button type="button" onClick={() => void onDelete(lecture.id)} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => void onDelete(lecture.id)}
+                  className="rounded-full border border-rose-300 px-3 py-1 text-sm text-rose-600 dark:border-rose-500/50 dark:text-rose-300"
+                >
                   삭제
                 </button>
               </div>
