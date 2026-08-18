@@ -10,7 +10,7 @@ import { useState } from "react";
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { membership, memberName, isAdmin, logout } = useMembership();
+  const { membership, memberDisplayName, isAdmin, logout } = useMembership();
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,7 +59,7 @@ export function SiteHeader() {
                 }}
                 className="hidden rounded-full border border-[var(--line)] px-3 py-2 text-sm md:inline-flex"
               >
-                {memberName} · 로그아웃
+                {memberDisplayName} · 로그아웃
               </button>
             </>
           ) : (
@@ -133,7 +133,7 @@ export function SiteHeader() {
                   }}
                   className="pt-2 text-left"
                 >
-                  {memberName} · 로그아웃
+                  {memberDisplayName} · 로그아웃
                 </button>
               </>
             )}

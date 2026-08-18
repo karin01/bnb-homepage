@@ -46,6 +46,15 @@ export function displayCohort(grade: string, savedCohort: number | null) {
   return savedCohort ?? cohortFromGrade(grade);
 }
 
+/** 로그인 이름 앞에 기수를 붙입니다. 예: 38기 손진호. 기수가 없으면 이름만 둡니다. */
+export function formatMemberNameWithCohort(name: string, grade: string, cohort: number | null) {
+  const cohortLabel = formatCohort(displayCohort(grade, cohort));
+  if (!name.trim()) {
+    return cohortLabel === "미입력" ? "학우" : `${cohortLabel} 학우`;
+  }
+  return cohortLabel === "미입력" ? name : `${cohortLabel} ${name}`;
+}
+
 export function cohortSelectOptions(current = freshmanCohortForYear()) {
   const oldest = Math.max(MIN_COHORT, current - 30);
   const newest = Math.min(MAX_COHORT, current + 1);

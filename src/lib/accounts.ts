@@ -60,6 +60,8 @@ export type AccountSession = {
   name: string;
   email: string;
   role: MemberRole;
+  grade: string;
+  cohort: number | null;
   emailVerified: boolean;
 };
 
@@ -356,6 +358,8 @@ export async function signupAccount(input: SignupInput) {
       name: input.name.trim(),
       email,
       role: "site" as const,
+      grade: input.grade,
+      cohort: parseCohort(input.cohort),
       emailVerified: createdUser.emailVerified,
     } satisfies AccountSession;
   } catch (error) {
@@ -496,6 +500,8 @@ export async function loginAccount(loginId: string, password: string) {
       name: member.name,
       email: member.email,
       role: member.role,
+      grade: member.grade,
+      cohort: member.cohort,
       emailVerified: credential.user.emailVerified,
     } satisfies AccountSession;
   } catch (error) {

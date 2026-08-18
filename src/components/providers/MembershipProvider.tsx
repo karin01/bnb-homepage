@@ -8,6 +8,7 @@ import {
   watchAuth,
   type SignupInput,
 } from "@/lib/accounts";
+import { formatMemberNameWithCohort } from "@/data/cohort";
 import { canLoginWithStatus, type MemberStatus } from "@/lib/member-status";
 import { listBoardsOrSeed } from "@/lib/boards";
 import { canOpenAdmin, canUsePaidContent, type MemberRole } from "@/lib/member-roles";
@@ -18,6 +19,7 @@ type MembershipContextValue = {
   membership: "guest" | "member";
   uid: string;
   memberName: string;
+  memberDisplayName: string;
   loginId: string;
   email: string;
   role: MemberRole | null;
@@ -37,6 +39,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
   const [status, setStatus] = useState<"loading" | "ready">("loading");
   const [uid, setUid] = useState("");
   const [memberName, setMemberName] = useState("학우");
+  const [memberGrade, setMemberGrade] = useState("");
+  const [memberCohort, setMemberCohort] = useState<number | null>(null);
   const [loginId, setLoginId] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<MemberRole | null>(null);
@@ -48,6 +52,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
       if (!user) {
         setUid("");
         setMemberName("학우");
+        setMemberGrade("");
+        setMemberCohort(null);
         setLoginId("");
         setEmail("");
         setRole(null);
@@ -63,6 +69,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
           await logoutAccount();
           setUid("");
           setMemberName("학우");
+          setMemberGrade("");
+          setMemberCohort(null);
           setLoginId("");
           setEmail("");
           setRole(null);
@@ -72,6 +80,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
         }
         setUid(user.uid);
         setMemberName(member?.name ?? user.displayName ?? "학우");
+        setMemberGrade(member?.grade ?? "");
+        setMemberCohort(member?.cohort ?? null);
         setLoginId(member?.loginId ?? "");
         setEmail(member?.email ?? user.email ?? "");
         setRole(member?.role ?? "site");
@@ -80,6 +90,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
       } catch {
         setUid(user.uid);
         setMemberName(user.displayName ?? "학우");
+        setMemberGrade("");
+        setMemberCohort(null);
         setLoginId("");
         setEmail(user.email ?? "");
         setRole("site");
@@ -93,6 +105,7 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
     return unsubscribe;
   }, []);
 
+  const memberDisplayName = formatMemberNameWithCohort(memberName, memberGrade, memberCohort);
   const isLoggedIn = Boolean(uid) && memberStatus !== "blocked" && memberStatus !== "withdrawn";
   const isAdmin = canOpenAdmin(role, email, emailVerified) && memberStatus !== "blocked" && memberStatus !== "withdrawn";
   const isStudyMember = isLoggedIn && (canUsePaidContent(role) || isAdmin);
@@ -110,6 +123,7 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
       membership: isLoggedIn ? ("member" as const) : ("guest" as const),
       uid,
       memberName,
+      memberDisplayName,
       loginId,
       email,
       role,
@@ -122,6 +136,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
         const session = await signupAccount(input);
         setUid(session.uid);
         setMemberName(session.name);
+        setMemberGrade(session.grade);
+        setMemberCohort(session.cohort);
         setLoginId(session.loginId);
         setEmail(session.email);
         setRole(session.role);
@@ -133,6 +149,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
         const session = await loginAccount(nextLoginId, password);
         setUid(session.uid);
         setMemberName(session.name);
+        setMemberGrade(session.grade);
+        setMemberCohort(session.cohort);
         setLoginId(session.loginId);
         setEmail(session.email);
         setRole(session.role);
@@ -144,6 +162,8 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
         await logoutAccount();
         setUid("");
         setMemberName("학우");
+        setMemberGrade("");
+        setMemberCohort(null);
         setLoginId("");
         setEmail("");
         setRole(null);
@@ -151,7 +171,7 @@ export function MembershipProvider({ children }: { children: React.ReactNode }) 
         setEmailVerified(false);
       },
     }),
-    [status, uid, memberName, loginId, email, role, memberStatus, emailVerified, isLoggedIn, isAdmin, isStudyMember],
+    [status, uid, memberName, memberDisplayName, loginId, email, role, memberStatus, emailVerified, isLoggedIn, isAdmin, isStudyMember],
   );
 
   return <MembershipContext.Provider value={value}>{children}</MembershipContext.Provider>;
