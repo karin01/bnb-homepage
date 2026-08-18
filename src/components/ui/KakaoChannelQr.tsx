@@ -1,4 +1,5 @@
 import { SITE } from "@/data/site";
+import { withBasePath } from "@/lib/site-path";
 
 type KakaoChannelQrProps = {
   /** section: 홈/입회 안내처럼 크게, compact: 푸터처럼 작게 */
@@ -12,7 +13,7 @@ export function KakaoChannelQr({ variant = "section" }: KakaoChannelQrProps) {
   const qrImage = (
     <div className={`shrink-0 bg-white ${isCompact ? "rounded-2xl p-2" : "rounded-3xl p-4"}`}>
       <img
-        src={SITE.kakaoChannelQrSrc}
+        src={withBasePath(SITE.kakaoChannelQrSrc)}
         alt="Bit & Byte 카카오채널 QR 코드"
         width={size}
         height={size}

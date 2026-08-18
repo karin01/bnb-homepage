@@ -43,6 +43,7 @@ export const SITE = {
   },
   kakaoChannelUrl: "https://pf.kakao.com/_exoxhBX",
   kakaoChatUrl: "https://pf.kakao.com/_exoxhBX/chat",
+  /** public 폴더 기준 경로. GitHub Pages에서는 withBasePath로 /bnb-homepage를 붙입니다. */
   kakaoChannelQrSrc: "/images/kakao-channel-qr.png",
   googleFormUrl:
     "https://docs.google.com/forms/d/e/1FAIpQLSe7e60br0OGZOX532hXDDcS1VO6-gJWIKv2tD-G2otvVE-qng/viewform",
