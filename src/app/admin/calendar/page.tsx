@@ -1,12 +1,15 @@
 "use client";
 
 import {
+  CALENDAR_CAMPUSES,
   CALENDAR_EVENT_CATEGORIES,
   CALENDAR_REPEAT_CYCLES,
   CALENDAR_REPEAT_HINTS,
   SEMESTER_END_DATE,
   SEMESTER_START_DATE,
+  calendarCampusLabel,
   formatCalendarEventPeriod,
+  parseCalendarCampus,
   parseCalendarRepeatCycle,
   withDefaultCalendarRepeat,
   type CalendarEvent,
@@ -25,6 +28,7 @@ const EMPTY_FORM: CalendarEvent = {
   category: "스터디",
   description: "",
   repeatCycle: "하루",
+  campus: "seongsu",
 };
 
 export default function AdminCalendarPage() {
@@ -102,39 +106,61 @@ export default function AdminCalendarPage() {
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
 
       <form onSubmit={onSubmit} className="glass-card grid items-start gap-3 rounded-3xl p-5 md:grid-cols-2">
-        <label className="grid gap-1 text-sm">
-          반복
-          <select
-            value={form.repeatCycle}
-            onChange={(event) => {
-              const nextCycle = parseCalendarRepeatCycle(event.target.value);
-              if (nextCycle) {
-                changeRepeatCycle(nextCycle);
-              }
-            }}
-            className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
-          >
-            {CALENDAR_REPEAT_CYCLES.map((cycle) => (
-              <option key={cycle} value={cycle}>
-                {cycle}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm">
-          구분
-          <select
-            value={form.category}
-            onChange={(event) => setForm({ ...form, category: event.target.value as CalendarEvent["category"] })}
-            className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
-          >
-            {CALENDAR_EVENT_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="grid items-start gap-3 md:col-span-2 md:grid-cols-3">
+          <label className="grid gap-1 text-sm">
+            반복
+            <select
+              value={form.repeatCycle}
+              onChange={(event) => {
+                const nextCycle = parseCalendarRepeatCycle(event.target.value);
+                if (nextCycle) {
+                  changeRepeatCycle(nextCycle);
+                }
+              }}
+              className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
+            >
+              {CALENDAR_REPEAT_CYCLES.map((cycle) => (
+                <option key={cycle} value={cycle}>
+                  {cycle}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm">
+            구분
+            <select
+              value={form.category}
+              onChange={(event) => setForm({ ...form, category: event.target.value as CalendarEvent["category"] })}
+              className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
+            >
+              {CALENDAR_EVENT_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm">
+            대학교
+            <select
+              value={form.campus}
+              onChange={(event) => {
+                const nextCampus = parseCalendarCampus(event.target.value);
+                if (nextCampus) {
+                  setForm({ ...form, campus: nextCampus });
+                }
+              }}
+              className="h-10 rounded-xl border border-[var(--line)] bg-transparent px-3"
+            >
+              {CALENDAR_CAMPUSES.map((campus) => (
+                <option key={campus.value} value={campus.value}>
+                  {campus.label}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-[var(--text-muted)]">대면은 학습관을 고르고, 과제 마감처럼 어디든 같으면 공통을 고르세요.</span>
+          </label>
+        </div>
         <p className="md:col-span-2 text-xs text-[var(--text-muted)]">{CALENDAR_REPEAT_HINTS[form.repeatCycle]}</p>
         <label className="grid gap-1 text-sm">
           시작일
@@ -194,7 +220,7 @@ export default function AdminCalendarPage() {
             <div key={item.id} className="flex flex-col gap-2 rounded-2xl border border-[var(--line)] px-4 py-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                  {formatCalendarEventPeriod(item)} · {item.category}
+                  {formatCalendarEventPeriod(item)} · {item.category} · {calendarCampusLabel(item.campus)}
                 </p>
                 <p className="font-medium">{item.title}</p>
                 <p className="text-sm text-[var(--text-muted)]">{item.description}</p>

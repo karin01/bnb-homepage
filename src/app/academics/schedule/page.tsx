@@ -3,14 +3,19 @@
 import { PageHero } from "@/components/ui/PageHero";
 import { useMembership } from "@/components/providers/MembershipProvider";
 import {
+  calendarCampusLabel,
+  calendarEventMatchesCampus,
   calendarEventOccursOnDate,
   formatCalendarEventPeriod,
   formatLecturePeriod,
   formatLectureWhen,
   GRADE_OPTIONS,
+  CALENDAR_CAMPUSES,
   gradeLabel,
   lecturesOnDate,
+  parseCalendarCampus,
   parseGrade,
+  type CalendarCampus,
   type Grade,
 } from "@/data/schedule";
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
@@ -29,6 +34,7 @@ export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState("2026-09-05");
   const [subjectQuery, setSubjectQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<"all" | Grade>("all");
+  const [campusFilter, setCampusFilter] = useState<CalendarCampus>("all");
 
   const days = useMemo(() => {
     const year = monthCursor.getFullYear();
@@ -50,7 +56,7 @@ export default function SchedulePage() {
       if (!cell) {
         return;
       }
-      if (events.some((event) => calendarEventOccursOnDate(event, cell.date))) {
+      if (events.some((event) => calendarEventOccursOnDate(event, cell.date) && calendarEventMatchesCampus(event, campusFilter))) {
         marked.add(cell.date);
       }
       if (lecturesOnDate(lectures, cell.date).length > 0) {
@@ -58,9 +64,9 @@ export default function SchedulePage() {
       }
     });
     return marked;
-  }, [days, lectures, events]);
+  }, [days, lectures, events, campusFilter]);
 
-  const dayEvents = events.filter((event) => calendarEventOccursOnDate(event, selectedDate));
+  const dayEvents = events.filter((event) => calendarEventOccursOnDate(event, selectedDate) && calendarEventMatchesCampus(event, campusFilter));
   const dayLectures = lecturesOnDate(lectures, selectedDate);
   const filteredLectures = useMemo(() => {
     const needle = subjectQuery.trim().toLowerCase();
@@ -137,13 +143,32 @@ export default function SchedulePage() {
           </div>
         </article>
         <article className="glass-card rounded-3xl p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold">{selectedDate} 일정</h2>
-            {isAdmin ? (
-              <Link href="/admin/calendar" className="text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
-                일정 추가
-              </Link>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={campusFilter}
+                onChange={(event) => {
+                  const nextCampus = parseCalendarCampus(event.target.value);
+                  if (nextCampus) {
+                    setCampusFilter(nextCampus);
+                  }
+                }}
+                className="rounded-full border border-[var(--line)] bg-transparent px-3 py-1.5 text-sm"
+                aria-label="대학교 필터"
+              >
+                {CALENDAR_CAMPUSES.map((campus) => (
+                  <option key={campus.value} value={campus.value}>
+                    {campus.value === "all" ? "전체 대학교" : campus.label}
+                  </option>
+                ))}
+              </select>
+              {isAdmin ? (
+                <Link href="/admin/calendar" className="text-sm font-semibold text-cyan-700 dark:text-cyan-glow">
+                  일정 추가
+                </Link>
+              ) : null}
+            </div>
           </div>
           <div className="mt-4 grid gap-3">
             {!hasDayItems ? (
@@ -153,7 +178,7 @@ export default function SchedulePage() {
                 {dayEvents.map((event) => (
                   <div key={event.id} className="rounded-2xl border border-[var(--line)] p-4">
                     <p className="text-xs text-cyan-700 dark:text-cyan-glow">
-                      {event.category} · {formatCalendarEventPeriod(event)}
+                      {event.category} · {calendarCampusLabel(event.campus)} · {formatCalendarEventPeriod(event)}
                     </p>
                     <p className="mt-1 font-medium">{event.title}</p>
                     <p className="mt-2 text-sm text-[var(--text-muted)]">{event.description}</p>

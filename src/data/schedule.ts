@@ -346,6 +346,16 @@ export const CALENDAR_REPEAT_HINTS: Record<CalendarRepeatCycle, string> = {
   격주: "시작일 요일을 기준으로 종료일까지 2주마다 표시됩니다.",
 };
 
+/** 출석수업·대면 일정이 열리는 방송대 장소. 공통은 캠퍼스와 무관한 학사 안내용입니다. */
+export const CALENDAR_CAMPUSES = [
+  { value: "all", label: "공통" },
+  { value: "seongsu", label: "지역대학(성수)" },
+  { value: "south", label: "남부학습관" },
+  { value: "west", label: "서부학습관" },
+] as const;
+
+export type CalendarCampus = (typeof CALENDAR_CAMPUSES)[number]["value"];
+
 export type CalendarEvent = {
   id: string;
   date: string;
@@ -354,7 +364,28 @@ export type CalendarEvent = {
   category: "학사" | "스터디" | "행사";
   description: string;
   repeatCycle: CalendarRepeatCycle;
+  campus: CalendarCampus;
 };
+
+export function isCalendarCampus(value: string): value is CalendarCampus {
+  return CALENDAR_CAMPUSES.some((campus) => campus.value === value);
+}
+
+export function parseCalendarCampus(value: unknown): CalendarCampus | null {
+  return isCalendarCampus(String(value ?? "")) ? (value as CalendarCampus) : null;
+}
+
+export function calendarCampusLabel(campus: CalendarCampus | string | undefined) {
+  return CALENDAR_CAMPUSES.find((item) => item.value === campus)?.label ?? "공통";
+}
+
+/** 달력 필터. 전체를 보면 모두 보이고, 학습관을 고르면 그곳 일정과 공통 일정을 함께 봅니다. */
+export function calendarEventMatchesCampus(event: CalendarEvent, campusFilter: CalendarCampus) {
+  if (campusFilter === "all") {
+    return true;
+  }
+  return event.campus === "all" || event.campus === campusFilter;
+}
 
 export function isCalendarRepeatCycle(value: string): value is CalendarRepeatCycle {
   return CALENDAR_REPEAT_CYCLES.includes(value as CalendarRepeatCycle);
@@ -364,8 +395,13 @@ export function parseCalendarRepeatCycle(value: unknown): CalendarRepeatCycle | 
   return isCalendarRepeatCycle(String(value ?? "")) ? (value as CalendarRepeatCycle) : null;
 }
 
-/** 예전 문서에 반복이 없으면, 하루/기간으로 읽어 달력이 비지 않게 합니다. */
-export function withDefaultCalendarRepeat(event: Omit<CalendarEvent, "repeatCycle"> & { repeatCycle?: CalendarRepeatCycle | string }) {
+/** 예전 문서에 반복·대학교가 없으면, 하루/기간·공통으로 읽어 달력이 비지 않게 합니다. */
+export function withDefaultCalendarRepeat(
+  event: Omit<CalendarEvent, "repeatCycle" | "campus"> & {
+    repeatCycle?: CalendarRepeatCycle | string;
+    campus?: CalendarCampus | string;
+  },
+) {
   const endDate = isDateString(event.endDate) ? event.endDate : event.date;
   const parsed = parseCalendarRepeatCycle(event.repeatCycle);
   const repeatCycle = parsed ?? (event.date === endDate ? "하루" : "기간");
@@ -373,6 +409,7 @@ export function withDefaultCalendarRepeat(event: Omit<CalendarEvent, "repeatCycl
     ...event,
     endDate: repeatCycle === "하루" ? event.date : endDate,
     repeatCycle,
+    campus: parseCalendarCampus(event.campus) ?? "all",
   } satisfies CalendarEvent;
 }
 
@@ -431,6 +468,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     category: "스터디",
     description: "신·편입생 대상 오픈수업 일정과 입회 안내가 시작됩니다.",
     repeatCycle: "하루",
+    campus: "all",
   },
   {
     id: "e2",
@@ -440,6 +478,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     category: "행사",
     description: "혜화동 스터디룸에서 학기 오리엔테이션을 진행합니다.",
     repeatCycle: "하루",
+    campus: "all",
   },
   {
     id: "e3",
@@ -449,6 +488,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     category: "스터디",
     description: "학년별 분담 강의가 본격적으로 시작됩니다.",
     repeatCycle: "하루",
+    campus: "all",
   },
   {
     id: "e4",
@@ -458,6 +498,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     category: "학사",
     description: "방송대 공식 출석수업 기간입니다. 스터디 시간표가 일부 조정될 수 있습니다.",
     repeatCycle: "하루",
+    campus: "all",
   },
   {
     id: "e5",
@@ -467,6 +508,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     category: "학사",
     description: "학년별 과제 가이드와 첨삭 일정을 자료실에서 확인하세요.",
     repeatCycle: "하루",
+    campus: "all",
   },
   {
     id: "e6",
@@ -476,5 +518,6 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
     category: "학사",
     description: "기출 풀이 특강이 집중 편성됩니다.",
     repeatCycle: "하루",
+    campus: "all",
   },
 ];
