@@ -131,7 +131,12 @@ export default function AdminPopupNoticesPage() {
       await reload();
       resetForm();
     } catch (error) {
-      setErrorMessage(toKoreanFirebaseError(error, "팝업 공지를 저장하지 못했습니다."));
+      const mapped = toKoreanFirebaseError(error, "팝업 공지를 저장하지 못했습니다.");
+      setErrorMessage(
+        mapped === "지금 이 작업에 대한 권한이 없습니다."
+          ? "운영진으로 로그인되어 있습니다. 저장이 거절된 것은 권한 문제가 아니라, 서버 규칙이 문서 형식을 막은 경우입니다. 페이지를 새로고침한 뒤 다시 저장해 주세요."
+          : mapped,
+      );
     } finally {
       setIsSaving(false);
     }

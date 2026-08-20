@@ -67,7 +67,7 @@ export function validatePopupNotice(input: PopupNotice) {
   }
   const imageUrl = input.imageUrl.trim();
   const storagePath = input.storagePath.trim();
-  if (imageUrl.length > 800) {
+  if (imageUrl.length > 2000) {
     return "사진 주소가 너무 깁니다.";
   }
   if (storagePath && !storagePath.startsWith(`popup-notices/${input.id.trim()}/`)) {

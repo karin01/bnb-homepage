@@ -381,24 +381,35 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function isValidPopupNoticeImageUrl(data) {
+      return !('imageUrl' in data)
+        || (data.imageUrl is string && data.imageUrl.size() <= 2000);
+    }
+
+    function isValidPopupNoticeStoragePath(data, noticeId) {
+      return !('storagePath' in data)
+        || (
+          data.storagePath is string
+          && data.storagePath.size() <= 200
+          && (
+            data.storagePath == ''
+            || data.storagePath.matches('^popup-notices/' + noticeId + '/.{1,120}$')
+          )
+        );
+    }
+
     function isValidPopupNotice(data, noticeId) {
       return hasOnlyAllowedFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'imageUrl', 'storagePath', 'updatedAt'])
-        && hasRequiredFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'imageUrl', 'storagePath', 'updatedAt'])
+        && hasRequiredFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'updatedAt'])
         && data.id == noticeId
         && validStringLength('id', 1, 40)
         && data.id.matches('^[a-zA-Z0-9_-]{1,40}$')
         && validStringLength('title', 1, 80)
         && data.body is string
         && data.body.size() <= 800
-        && data.imageUrl is string
-        && data.imageUrl.size() <= 800
-        && data.storagePath is string
-        && data.storagePath.size() <= 200
-        && (
-          data.storagePath == ''
-          || data.storagePath.matches('^popup-notices/' + noticeId + '/.{1,120}$')
-        )
-        && (data.body.size() >= 1 || data.imageUrl.size() >= 8)
+        && isValidPopupNoticeImageUrl(data)
+        && isValidPopupNoticeStoragePath(data, noticeId)
+        && (data.body.size() >= 1 || (('imageUrl' in data) && data.imageUrl.size() >= 8))
         && data.enabled is bool
         && isValidDateString(data.startDate)
         && isValidDateString(data.endDate)
