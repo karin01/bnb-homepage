@@ -27,6 +27,9 @@ service firebase.storage {
       allow delete: if isAuthenticated()
         && noticeId.matches('^[a-zA-Z0-9_-]{1,40}$');
     }
+
+    // 게시글 사진. 홈·게시판을 여는 학우도 봐야 해서 읽기는 공개입니다.
+    match /posts/{postId}/{fileName} {
       allow read: if true;
       allow write: if isAuthenticated()
         && postId.matches('^[a-zA-Z0-9_-]{1,40}$')
