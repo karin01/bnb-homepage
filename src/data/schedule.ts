@@ -88,6 +88,26 @@ export function toDateString(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+/** 한국 날짜 기준 오늘. 학습일정 달력은 개강일이 아니라 이 값을 기본으로 고릅니다. */
+export function todayDateString(now = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+export function monthStartFromDateString(dateString: string) {
+  const [year, month] = dateString.split("-").map(Number);
+  if (!year || !month) {
+    const fallback = todayDateString();
+    const [fallbackYear, fallbackMonth] = fallback.split("-").map(Number);
+    return new Date(fallbackYear, fallbackMonth - 1, 1);
+  }
+  return new Date(year, month - 1, 1);
+}
+
 export function weekdayFromDate(dateString: string): Weekday {
   const parsed = new Date(`${dateString}T00:00:00`);
   const sundayFirst: Weekday[] = ["일", "월", "화", "수", "목", "금", "토"];

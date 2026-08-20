@@ -16,9 +16,11 @@ import {
   CALENDAR_EVENT_CATEGORIES,
   gradeLabel,
   lecturesOnDate,
+  monthStartFromDateString,
   parseCalendarCampus,
   parseGrade,
   sortCalendarEventsForDisplay,
+  todayDateString,
   type CalendarCampus,
   type CalendarEvent,
   type Grade,
@@ -26,7 +28,7 @@ import {
 import { useCalendarEvents } from "@/hooks/useCalendarEvents";
 import { useLectures } from "@/hooks/useLectures";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
@@ -48,13 +50,20 @@ export default function SchedulePage() {
   const { isAdmin } = useMembership();
   const { lectures } = useLectures();
   const { events } = useCalendarEvents();
-  const today = new Date(2026, 8, 5);
-  const [monthCursor, setMonthCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selectedDate, setSelectedDate] = useState("2026-09-05");
+  const [today, setToday] = useState(todayDateString);
+  const [monthCursor, setMonthCursor] = useState(() => monthStartFromDateString(todayDateString()));
+  const [selectedDate, setSelectedDate] = useState(todayDateString);
   const [subjectQuery, setSubjectQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<"all" | Grade>("all");
   const [campusFilter, setCampusFilter] = useState<CalendarCampus>("all");
   const [categoryFilter, setCategoryFilter] = useState<"all" | CalendarEvent["category"]>("all");
+
+  useEffect(() => {
+    const nextToday = todayDateString();
+    setToday(nextToday);
+    setSelectedDate(nextToday);
+    setMonthCursor(monthStartFromDateString(nextToday));
+  }, []);
 
   const days = useMemo(() => {
     const year = monthCursor.getFullYear();
@@ -153,6 +162,7 @@ export default function SchedulePage() {
               const marks = cell ? marksByDate.get(cell.date) ?? [] : [];
               const hasAttendance = marks.includes("출석수업");
               const hasAcademic = marks.includes("학사");
+              const isToday = cell?.date === today;
               return cell ? (
                 <button
                   key={cell.date}
@@ -166,7 +176,7 @@ export default function SchedulePage() {
                         : hasAcademic
                           ? "bg-amber-100 text-amber-950 hover:bg-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:hover:bg-amber-400/25"
                           : "hover:bg-black/5 dark:hover:bg-white/5"
-                  }`}
+                  } ${isToday && selectedDate !== cell.date ? "ring-2 ring-cyan-500/70 ring-inset" : ""}`}
                 >
                   {cell.day}
                   <CalendarDayMarks marks={marks} inverted={selectedDate === cell.date} />
