@@ -42,8 +42,8 @@
 // Collection: popupNotices
 // Document ID: 팝업 공지 ID
 // Fields:
-//   - id, title, body, enabled, startDate, endDate, updatedAt
-// 사이트 첫 화면 팝업이라 읽기는 공개, 쓰기는 운영진만 허용합니다.
+//   - id, title, body, enabled, startDate, endDate, imageUrl, storagePath, updatedAt
+// 사이트 첫 화면 팝업이라 읽기는 공개, 쓰기는 운영진만 허용합니다. 사진은 Storage `popup-notices/{id}/` 입니다.
 //
 // Collection: boards
 // Document ID: 게시판 ID (영문 소문자 시작, 2-20)
@@ -382,13 +382,23 @@ service cloud.firestore {
     }
 
     function isValidPopupNotice(data, noticeId) {
-      return hasOnlyAllowedFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'updatedAt'])
-        && hasRequiredFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'updatedAt'])
+      return hasOnlyAllowedFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'imageUrl', 'storagePath', 'updatedAt'])
+        && hasRequiredFields(['id', 'title', 'body', 'enabled', 'startDate', 'endDate', 'imageUrl', 'storagePath', 'updatedAt'])
         && data.id == noticeId
         && validStringLength('id', 1, 40)
         && data.id.matches('^[a-zA-Z0-9_-]{1,40}$')
         && validStringLength('title', 1, 80)
-        && validStringLength('body', 1, 800)
+        && data.body is string
+        && data.body.size() <= 800
+        && data.imageUrl is string
+        && data.imageUrl.size() <= 800
+        && data.storagePath is string
+        && data.storagePath.size() <= 200
+        && (
+          data.storagePath == ''
+          || data.storagePath.matches('^popup-notices/' + noticeId + '/.{1,120}$')
+        )
+        && (data.body.size() >= 1 || data.imageUrl.size() >= 8)
         && data.enabled is bool
         && isValidDateString(data.startDate)
         && isValidDateString(data.endDate)

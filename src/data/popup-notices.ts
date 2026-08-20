@@ -7,6 +7,8 @@ export type PopupNotice = {
   id: string;
   title: string;
   body: string;
+  imageUrl: string;
+  storagePath: string;
   enabled: boolean;
   startDate: string;
   endDate: string;
@@ -18,6 +20,20 @@ export type PopupNoticeDismissRecord = {
   untilDate: string;
 };
 
+const POPUP_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"];
+const POPUP_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+export function validatePopupNoticeImageFile(file: File) {
+  if (file.size <= 0 || file.size > POPUP_IMAGE_MAX_BYTES) {
+    return "사진은 8MB 이하만 올릴 수 있습니다.";
+  }
+  const extension = file.name.toLowerCase().split(".").pop() ?? "";
+  if (!POPUP_IMAGE_EXTENSIONS.includes(extension)) {
+    return "JPG, PNG, GIF, WEBP 사진만 올릴 수 있습니다.";
+  }
+  return "";
+}
+
 export function todayDateString() {
   return toDateString(new Date());
 }
@@ -27,6 +43,8 @@ export function createEmptyPopupNotice(today = todayDateString()): PopupNotice {
     id: "",
     title: "",
     body: "",
+    imageUrl: "",
+    storagePath: "",
     enabled: true,
     startDate: today,
     endDate: today,
@@ -44,8 +62,19 @@ export function validatePopupNotice(input: PopupNotice) {
   if (!input.title.trim() || input.title.trim().length > 80) {
     return "제목은 1~80자로 입력해 주세요.";
   }
-  if (!input.body.trim() || input.body.trim().length > 800) {
-    return "본문은 1~800자로 입력해 주세요.";
+  if (input.body.trim().length > 800) {
+    return "본문은 800자 이하로 입력해 주세요.";
+  }
+  const imageUrl = input.imageUrl.trim();
+  const storagePath = input.storagePath.trim();
+  if (imageUrl.length > 800) {
+    return "사진 주소가 너무 깁니다.";
+  }
+  if (storagePath && !storagePath.startsWith(`popup-notices/${input.id.trim()}/`)) {
+    return "사진 저장 위치가 올바르지 않습니다.";
+  }
+  if (!input.body.trim() && !imageUrl) {
+    return "본문이나 사진 중 하나는 넣어 주세요.";
   }
   if (!isDateString(input.startDate) || !isDateString(input.endDate)) {
     return "시작일과 종료일을 YYYY-MM-DD 형식으로 입력해 주세요.";

@@ -48,7 +48,12 @@ export function PopupNoticeDialog({ notice, onClose, onDismissToday }: PopupNoti
         <h2 id="popup-notice-title" className="mt-2 break-keep text-xl font-semibold">
           {notice.title}
         </h2>
-        <p className="mt-4 whitespace-pre-wrap break-keep text-sm leading-7 text-[var(--text-muted)]">{notice.body}</p>
+        {notice.imageUrl ? (
+          <img src={notice.imageUrl} alt={notice.title} className="mt-4 w-full rounded-2xl object-contain" />
+        ) : null}
+        {notice.body.trim() ? (
+          <p className="mt-4 whitespace-pre-wrap break-keep text-sm leading-7 text-[var(--text-muted)]">{notice.body}</p>
+        ) : null}
         <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
           <button type="button" onClick={onDismissToday} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
             오늘 하루 보지 않기

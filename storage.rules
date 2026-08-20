@@ -16,8 +16,17 @@ service firebase.storage {
       allow delete: if isAuthenticated();
     }
 
-    // 게시글 사진. 로그인한 사용자만 올리고 지울 수 있습니다.
-    match /posts/{postId}/{fileName} {
+    // 팝업 공지 사진. 홈을 여는 학우도 봐야 해서 읽기는 공개입니다.
+    match /popup-notices/{noticeId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isAuthenticated()
+        && noticeId.matches('^[a-zA-Z0-9_-]{1,40}$')
+        && request.resource.size > 0
+        && request.resource.size <= 8 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      allow delete: if isAuthenticated()
+        && noticeId.matches('^[a-zA-Z0-9_-]{1,40}$');
+    }
       allow read: if true;
       allow write: if isAuthenticated()
         && postId.matches('^[a-zA-Z0-9_-]{1,40}$')

@@ -7,6 +7,7 @@ import {
   popupNoticeStatusLabel,
   todayDateString,
   validatePopupNotice,
+  validatePopupNoticeImageFile,
   type PopupNotice,
 } from "@/data/popup-notices";
 import { toKoreanFirebaseError } from "@/lib/firebase-errors";
@@ -17,6 +18,9 @@ export default function AdminPopupNoticesPage() {
   const today = todayDateString();
   const [notices, setNotices] = useState<PopupNotice[]>([]);
   const [form, setForm] = useState<PopupNotice>(createEmptyPopupNotice(today));
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [storageToDelete, setStorageToDelete] = useState("");
   const [previewNotice, setPreviewNotice] = useState<PopupNotice | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +54,49 @@ export default function AdminPopupNoticesPage() {
     };
   }, []);
 
+  const resetForm = () => {
+    if (imagePreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setForm(createEmptyPopupNotice(today));
+    setImageFile(null);
+    setImagePreviewUrl("");
+    setStorageToDelete("");
+  };
+
+  const onPickImage = (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+    const fileError = validatePopupNoticeImageFile(file);
+    if (fileError) {
+      setErrorMessage(fileError);
+      return;
+    }
+    if (form.storagePath) {
+      setStorageToDelete(form.storagePath);
+    }
+    if (imagePreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setErrorMessage("");
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+    setForm({ ...form, imageUrl: "", storagePath: "" });
+  };
+
+  const onRemoveImage = () => {
+    if (form.storagePath) {
+      setStorageToDelete(form.storagePath);
+    }
+    if (imagePreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setImageFile(null);
+    setImagePreviewUrl("");
+    setForm({ ...form, imageUrl: "", storagePath: "" });
+  };
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const noticeToSave: PopupNotice = {
@@ -57,8 +104,13 @@ export default function AdminPopupNoticesPage() {
       id: form.id.trim() || `popup-${Date.now()}`,
       title: form.title.trim(),
       body: form.body.trim(),
+      imageUrl: form.imageUrl.trim() || (imageFile ? "https://pending.local/image" : ""),
     };
-    const validationMessage = validatePopupNotice(noticeToSave);
+    const validationMessage = validatePopupNotice({
+      ...noticeToSave,
+      imageUrl: noticeToSave.imageUrl,
+      storagePath: imageFile ? "" : form.storagePath,
+    });
     if (validationMessage) {
       setErrorMessage(validationMessage);
       return;
@@ -67,9 +119,17 @@ export default function AdminPopupNoticesPage() {
     setIsSaving(true);
     setErrorMessage("");
     try {
-      await savePopupNotice(noticeToSave);
+      await savePopupNotice(
+        {
+          ...noticeToSave,
+          imageUrl: form.imageUrl.trim(),
+          storagePath: form.storagePath,
+        },
+        imageFile,
+        storageToDelete,
+      );
       await reload();
-      setForm(createEmptyPopupNotice(today));
+      resetForm();
     } catch (error) {
       setErrorMessage(toKoreanFirebaseError(error, "팝업 공지를 저장하지 못했습니다."));
     } finally {
@@ -83,7 +143,7 @@ export default function AdminPopupNoticesPage() {
     }
     setErrorMessage("");
     try {
-      await removePopupNotice(noticeId);
+      await removePopupNotice(noticeId, notices.find((item) => item.id === noticeId)?.storagePath ?? "");
       setNotices((current) => current.filter((item) => item.id !== noticeId));
       await reload();
     } catch (error) {
@@ -99,7 +159,7 @@ export default function AdminPopupNoticesPage() {
         <h1 className="text-2xl font-semibold">팝업 공지</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
           홈을 열면 가운데 창으로 한 장만 뜹니다. 켜 둔 공지가 여러 개면 <strong className="font-semibold">가장 최근 저장한 것</strong>만
-          보입니다. 운영 화면과 로그인 직후가 아니라, 일반 페이지에서만 띄웁니다. 본문에는 글을 그대로 넣고 HTML은 쓰지 마세요.
+          보입니다. 사진 1장(JPG·PNG·GIF·WEBP, 8MB 이하)을 넣을 수 있고, 본문은 비워도 됩니다. HTML은 쓰지 마세요.
         </p>
       </div>
       {errorMessage ? <p className="text-sm text-red-500">{errorMessage}</p> : null}
@@ -140,9 +200,30 @@ export default function AdminPopupNoticesPage() {
             value={form.body}
             onChange={(event) => setForm({ ...form, body: event.target.value })}
             className="min-h-32 rounded-xl border border-[var(--line)] bg-transparent px-3 py-2"
-            placeholder="학우에게 보여줄 안내. 줄바꿈은 그대로 보입니다."
+            placeholder="학우에게 보여줄 안내. 사진만 올려도 됩니다. 줄바꿈은 그대로 보입니다."
           />
         </label>
+        <label className="grid gap-1 text-sm">
+          사진
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
+            onChange={(event) => {
+              onPickImage(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+            className="text-sm"
+          />
+          <span className="text-xs text-[var(--text-muted)]">포스터·안내 이미지 1장. 없어도 본문만으로 저장됩니다.</span>
+        </label>
+        {imagePreviewUrl || form.imageUrl ? (
+          <div className="grid gap-2">
+            <img src={imagePreviewUrl || form.imageUrl} alt="팝업 사진 미리보기" className="max-h-64 w-full rounded-2xl object-contain" />
+            <button type="button" onClick={onRemoveImage} className="w-fit rounded-full border border-[var(--line)] px-3 py-1 text-sm">
+              사진 빼기
+            </button>
+          </div>
+        ) : null}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -161,12 +242,20 @@ export default function AdminPopupNoticesPage() {
           </button>
           <button
             type="button"
-            onClick={() => setPreviewNotice({ ...form, id: form.id || "preview", title: form.title.trim() || "미리보기", body: form.body.trim() || "본문을 입력하면 여기에 보입니다." })}
+            onClick={() =>
+              setPreviewNotice({
+                ...form,
+                id: form.id || "preview",
+                title: form.title.trim() || "미리보기",
+                body: form.body.trim(),
+                imageUrl: imagePreviewUrl || form.imageUrl,
+              })
+            }
             className="rounded-full border border-[var(--line)] px-4 py-2 text-sm"
           >
             미리보기
           </button>
-          <button type="button" onClick={() => setForm(createEmptyPopupNotice(today))} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
+          <button type="button" onClick={resetForm} className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
             입력칸 비우기
           </button>
         </div>
@@ -197,10 +286,25 @@ export default function AdminPopupNoticesPage() {
                       </span>
                     </div>
                     <p className="mt-2 font-semibold tracking-tight break-keep">{item.title}</p>
-                    <p className="mt-1 line-clamp-3 text-sm text-[var(--text-muted)] break-keep">{item.body}</p>
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt="" className="mt-2 h-28 w-full rounded-xl object-cover" />
+                    ) : null}
+                    {item.body ? <p className="mt-1 line-clamp-3 text-sm text-[var(--text-muted)] break-keep">{item.body}</p> : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => setForm(item)} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (imagePreviewUrl.startsWith("blob:")) {
+                          URL.revokeObjectURL(imagePreviewUrl);
+                        }
+                        setImageFile(null);
+                        setStorageToDelete("");
+                        setForm(item);
+                        setImagePreviewUrl(item.imageUrl);
+                      }}
+                      className="rounded-full border border-[var(--line)] px-3 py-1 text-sm"
+                    >
                       수정
                     </button>
                     <button type="button" onClick={() => setPreviewNotice(item)} className="rounded-full border border-[var(--line)] px-3 py-1 text-sm">
