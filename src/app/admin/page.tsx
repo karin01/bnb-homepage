@@ -94,6 +94,9 @@ export default function AdminHomePage() {
           <Link href="/admin/calendar" className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
             학사 일정
           </Link>
+          <Link href="/admin/notices" className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
+            팝업 공지
+          </Link>
           <Link href="/admin/resources" className="rounded-full border border-[var(--line)] px-4 py-2 text-sm">
             자료 올리기
           </Link>

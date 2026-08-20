@@ -11,6 +11,7 @@ const ADMIN_LINKS = [
   { href: "/admin/schedule", label: "시간표·과목" },
   { href: "/admin/labs", label: "소모임 관리" },
   { href: "/admin/calendar", label: "학사 일정" },
+  { href: "/admin/notices", label: "팝업 공지" },
   { href: "/admin/resources", label: "자료실" },
   { href: "/admin/share-notes", label: "쉐어노트" },
   { href: "/admin/security", label: "접속 보안" },

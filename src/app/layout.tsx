@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { MembershipProvider } from "@/components/providers/MembershipProvider";
 import { FloatingCta } from "@/components/layout/FloatingCta";
+import { PopupNoticeModal } from "@/components/layout/PopupNoticeModal";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SITE } from "@/data/site";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main>{children}</main>
               <SiteFooter />
               <FloatingCta />
+              <PopupNoticeModal />
             </div>
           </MembershipProvider>
         </ThemeProvider>
