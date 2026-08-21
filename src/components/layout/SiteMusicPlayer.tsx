@@ -10,7 +10,7 @@ import {
   type SiteMusicPrefs,
 } from "@/data/site-music";
 import { withBasePath } from "@/lib/site-path";
-import { Music, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { Music, Pause, Play, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -30,6 +30,7 @@ export function SiteMusicPlayer() {
   const [prefsReady, setPrefsReady] = useState(false);
 
   const lastSavedTimeRef = useRef(0);
+  const shouldRestoreTimeRef = useRef(true);
 
   const track = SITE_TRACKS[trackIndex] ?? SITE_TRACKS[0];
   const persist = useCallback((patch: Partial<SiteMusicPrefs>) => {
@@ -74,9 +75,10 @@ export function SiteMusicPlayer() {
     }
     audio.volume = volume;
     audio.muted = muted;
-    if (prefsRef.current.currentTime > 0 && Math.abs(audio.currentTime - prefsRef.current.currentTime) > 1) {
+    if (shouldRestoreTimeRef.current && prefsRef.current.currentTime > 0) {
       try {
         audio.currentTime = prefsRef.current.currentTime;
+        shouldRestoreTimeRef.current = false;
       } catch {
         // 아직 길이를 모르면 나중에 timeupdate에서 이어갑니다.
       }
@@ -93,7 +95,7 @@ export function SiteMusicPlayer() {
       return;
     }
     void tryPlay();
-  }, [isAdminPage, prefsReady, tryPlay, userPaused]);
+  }, [isAdminPage, prefsReady, track?.src, tryPlay, userPaused]);
 
   useEffect(() => {
     if (!needsGesture || userPaused || isAdminPage) {
@@ -132,7 +134,18 @@ export function SiteMusicPlayer() {
       if (SITE_TRACKS.length <= 1) {
         return;
       }
-      setTrackIndex((current) => (current + 1) % SITE_TRACKS.length);
+      shouldRestoreTimeRef.current = false;
+      lastSavedTimeRef.current = 0;
+      setCurrentTime(0);
+      setDuration(0);
+      setTrackIndex((current) => {
+        const nextIndex = (current + 1) % SITE_TRACKS.length;
+        const nextTrack = SITE_TRACKS[nextIndex];
+        if (nextTrack) {
+          persist({ trackId: nextTrack.id, currentTime: 0 });
+        }
+        return nextIndex;
+      });
     };
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
@@ -151,6 +164,23 @@ export function SiteMusicPlayer() {
   if (!track) {
     return null;
   }
+
+  const goToTrack = (index: number) => {
+    if (SITE_TRACKS.length === 0) {
+      return;
+    }
+    const nextIndex = ((index % SITE_TRACKS.length) + SITE_TRACKS.length) % SITE_TRACKS.length;
+    const nextTrack = SITE_TRACKS[nextIndex];
+    if (!nextTrack) {
+      return;
+    }
+    shouldRestoreTimeRef.current = false;
+    lastSavedTimeRef.current = 0;
+    setCurrentTime(0);
+    setDuration(0);
+    setTrackIndex(nextIndex);
+    persist({ trackId: nextTrack.id, currentTime: 0 });
+  };
 
   const onTogglePlay = () => {
     const audio = audioRef.current;
@@ -210,18 +240,38 @@ export function SiteMusicPlayer() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{track.title}</p>
                   <p className="truncate text-xs text-[var(--text-muted)]">
-                    {needsGesture && !isPlaying ? "화면을 한 번 누르면 노래가 이어집니다." : `${track.artist} · 반복 재생`}
+                    {needsGesture && !isPlaying
+                      ? "화면을 한 번 누르면 노래가 이어집니다."
+                      : `${track.artist} · ${trackIndex + 1}/${SITE_TRACKS.length} · 전체 반복`}
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onTogglePlay}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-500 text-navy-950"
-                aria-label={isPlaying ? "일시정지" : "재생"}
-              >
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => goToTrack(trackIndex - 1)}
+                  className="grid h-9 w-9 place-items-center rounded-full border border-[var(--line)]"
+                  aria-label="이전 곡"
+                >
+                  <SkipBack size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onTogglePlay}
+                  className="grid h-10 w-10 place-items-center rounded-full bg-cyan-500 text-navy-950"
+                  aria-label={isPlaying ? "일시정지" : "재생"}
+                >
+                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToTrack(trackIndex + 1)}
+                  className="grid h-9 w-9 place-items-center rounded-full border border-[var(--line)]"
+                  aria-label="다음 곡"
+                >
+                  <SkipForward size={16} />
+                </button>
+              </div>
               <div className="hidden min-w-0 items-center gap-2 sm:flex sm:w-64">
                 <span className="w-8 text-right font-mono text-[11px] text-[var(--text-muted)]">{formatTrackTime(currentTime)}</span>
                 <input
