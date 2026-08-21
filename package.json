@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:music": "python tools/sync-site-music.py"
   },
   "dependencies": {
     "firebase": "^12.17.1",

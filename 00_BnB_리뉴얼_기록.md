@@ -127,6 +127,7 @@
 - 2026-08-20 학습일정 달력이 열릴 때 개강일(2026-09-05)이 아니라 한국 기준 오늘을 고르게 했다. 예전에는 샘플용 날짜가 코드에 박혀 있었다.
 - 2026-08-22 사이트 맨 아래에 MP 플레이어를 고정했다. 메뉴를 옮겨도 노래가 끊기지 않고, 한 곡을 반복한다. 시중 음원은 저작권 때문에 넣지 않고 `public/music/bnb-study-loop.mp3`(혜화 루프)를 쓴다. 브라우저가 자동재생을 막으면 화면을 한 번 누르면 이어진다. 관리 페이지에서는 끈다.
 - 2026-08-22 플레이어 곡을 `G:\내 드라이브\KNOU\노래`의 BnB 음원으로 바꿨다. 같은 파일인 `Bit & Byte (3).mp3`는 빼고 20곡을 순서대로 이어서 반복한다.
+- 2026-08-22 음원 폴더를 사이트 플레이리스트에 맞추는 스크립트 `tools/sync-site-music.py`를 넣었다. 폴더에 mp3를 두고 `npm run sync:music`을 실행한 뒤 푸시하면 공개 플레이어에 반영된다. 같은 내용 파일은 한 곡만 넣는다.
 
 ## 실행
 
@@ -137,5 +138,14 @@ cd C:\Users\Luna\bnb-homepage
 npm install
 npm run dev
 ```
+
+음원 폴더(`G:\내 드라이브\KNOU\노래`)에 mp3를 넣은 뒤 플레이리스트에 반영하려면:
+
+```bash
+cd C:\Users\Luna\bnb-homepage
+npm run sync:music
+```
+
+공개 사이트에 보이려면 그다음 커밋해서 `main`에 푸시합니다.
 
 관리 콘솔: https://console.firebase.google.com/project/bitandbyte-homepage/overview

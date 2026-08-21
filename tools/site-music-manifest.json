@@ -1,0 +1,185 @@
+{
+  "sourceFolder": "G:\\내 드라이브\\KNOU\\노래",
+  "tracks": [
+    {
+      "id": "bnb-01-bianbi",
+      "title": "비앤비",
+      "artist": "BnB Study",
+      "src": "/music/bnb-01-bianbi.mp3",
+      "file": "bnb-01-bianbi.mp3",
+      "sourceName": "비앤비.mp3",
+      "md5": "526e9210418bc024888f9fc77113041d"
+    },
+    {
+      "id": "bnb-02-bit-n-byte",
+      "title": "비트 앤 바이트",
+      "artist": "BnB Study",
+      "src": "/music/bnb-02-bit-n-byte.mp3",
+      "file": "bnb-02-bit-n-byte.mp3",
+      "sourceName": "비트 앤 바이트.mp3",
+      "md5": "af489ebfd42776df49764148d6cdb23e"
+    },
+    {
+      "id": "bnb-03-bit-n-byte-1",
+      "title": "비트 앤 바이트 (1)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-03-bit-n-byte-1.mp3",
+      "file": "bnb-03-bit-n-byte-1.mp3",
+      "sourceName": "비트 앤 바이트 (1).mp3",
+      "md5": "e23bfa644158f88243556d8ce9b10f93"
+    },
+    {
+      "id": "bnb-04-bit-and-byte",
+      "title": "Bit and Byte",
+      "artist": "BnB Study",
+      "src": "/music/bnb-04-bit-and-byte.mp3",
+      "file": "bnb-04-bit-and-byte.mp3",
+      "sourceName": "Bit and Byte.mp3",
+      "md5": "453ec2a475e738df77b37e7be302ecaf"
+    },
+    {
+      "id": "bnb-05-bit-amp-byte",
+      "title": "Bit & Byte",
+      "artist": "BnB Study",
+      "src": "/music/bnb-05-bit-amp-byte.mp3",
+      "file": "bnb-05-bit-amp-byte.mp3",
+      "sourceName": "Bit & Byte.mp3",
+      "md5": "0ba0fcfcf1b81cbdc435a8c17b3b4611"
+    },
+    {
+      "id": "bnb-06-bit-amp-byte-1",
+      "title": "Bit & Byte (1)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-06-bit-amp-byte-1.mp3",
+      "file": "bnb-06-bit-amp-byte-1.mp3",
+      "sourceName": "Bit & Byte (1).mp3",
+      "md5": "40e704aef28f6dfc42bba2eadcfa44c4"
+    },
+    {
+      "id": "bnb-07-bit-amp-byte-2",
+      "title": "Bit & Byte (2)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-07-bit-amp-byte-2.mp3",
+      "file": "bnb-07-bit-amp-byte-2.mp3",
+      "sourceName": "Bit & Byte (2).mp3",
+      "md5": "5d4d796cee02537f8f0cb3910d04def0"
+    },
+    {
+      "id": "bnb-08-bit-n-byte-5",
+      "title": "비트 앤 바이트 (5)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-08-bit-n-byte-5.mp3",
+      "file": "bnb-08-bit-n-byte-5.mp3",
+      "sourceName": "비트 앤 바이트 (5).mp3",
+      "md5": "89e4a60024077ec1ccd57e696aad94eb"
+    },
+    {
+      "id": "bnb-09-bit-n-byte-7",
+      "title": "비트 앤 바이트 (7)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-09-bit-n-byte-7.mp3",
+      "file": "bnb-09-bit-n-byte-7.mp3",
+      "sourceName": "비트 앤 바이트 (7).mp3",
+      "md5": "aaf7667e112a868d17746bebb88c89e3"
+    },
+    {
+      "id": "bnb-10-bit-n-byte-8",
+      "title": "비트 앤 바이트 (8)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-10-bit-n-byte-8.mp3",
+      "file": "bnb-10-bit-n-byte-8.mp3",
+      "sourceName": "비트 앤 바이트 (8).mp3",
+      "md5": "20d9a5237d3bb0b83d2bdde0aed1d3cd"
+    },
+    {
+      "id": "bnb-11-bit-n-byte-9",
+      "title": "비트 앤 바이트 (9)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-11-bit-n-byte-9.mp3",
+      "file": "bnb-11-bit-n-byte-9.mp3",
+      "sourceName": "비트 앤 바이트 (9).mp3",
+      "md5": "d3bd040d2d1d0f8e653ee95898f71fad"
+    },
+    {
+      "id": "bnb-12-bit-n-byte-10",
+      "title": "비트 앤 바이트 (10)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-12-bit-n-byte-10.mp3",
+      "file": "bnb-12-bit-n-byte-10.mp3",
+      "sourceName": "비트 앤 바이트 (10).mp3",
+      "md5": "018b37536e8f80e7e78e767928565ca0"
+    },
+    {
+      "id": "bnb-13-bit-n-byte-11",
+      "title": "비트 앤 바이트 (11)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-13-bit-n-byte-11.mp3",
+      "file": "bnb-13-bit-n-byte-11.mp3",
+      "sourceName": "비트 앤 바이트 (11).mp3",
+      "md5": "0d492245b3efe89cb38916ea17dc09be"
+    },
+    {
+      "id": "bnb-14-bit-n-byte-12",
+      "title": "비트 앤 바이트 (12)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-14-bit-n-byte-12.mp3",
+      "file": "bnb-14-bit-n-byte-12.mp3",
+      "sourceName": "비트 앤 바이트 (12).mp3",
+      "md5": "ca422e8415364a791ae4a42e33d716f0"
+    },
+    {
+      "id": "bnb-15-bit-n-byte-13",
+      "title": "비트 앤 바이트 (13)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-15-bit-n-byte-13.mp3",
+      "file": "bnb-15-bit-n-byte-13.mp3",
+      "sourceName": "비트 앤 바이트 (13).mp3",
+      "md5": "4954428e59e23db541a72877df073467"
+    },
+    {
+      "id": "bnb-16-bit-n-byte-14",
+      "title": "비트 앤 바이트 (14)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-16-bit-n-byte-14.mp3",
+      "file": "bnb-16-bit-n-byte-14.mp3",
+      "sourceName": "비트 앤 바이트 (14).mp3",
+      "md5": "3b6a0e10957f34ae870b83a40093541e"
+    },
+    {
+      "id": "bnb-17-bit-n-byte-15",
+      "title": "비트 앤 바이트 (15)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-17-bit-n-byte-15.mp3",
+      "file": "bnb-17-bit-n-byte-15.mp3",
+      "sourceName": "비트 앤 바이트 (15).mp3",
+      "md5": "92dae0af8691a308156eb49a9ab74c7a"
+    },
+    {
+      "id": "bnb-18-bit-n-byte-16",
+      "title": "비트 앤 바이트 (16)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-18-bit-n-byte-16.mp3",
+      "file": "bnb-18-bit-n-byte-16.mp3",
+      "sourceName": "비트 앤 바이트 (16).mp3",
+      "md5": "179bda4f0011bfcd8a2bb294a1d1b7c5"
+    },
+    {
+      "id": "bnb-19-bit-n-byte-rock",
+      "title": "비트 앤 바이트 (ver.Rock)",
+      "artist": "BnB Study",
+      "src": "/music/bnb-19-bit-n-byte-rock.mp3",
+      "file": "bnb-19-bit-n-byte-rock.mp3",
+      "sourceName": "비트 앤 바이트 (ver.Rock).mp3",
+      "md5": "f857c373c182980d03df407143bd8677"
+    },
+    {
+      "id": "bnb-20-bit-n-byte-yuhok",
+      "title": "비트 앤 바이트의 유혹",
+      "artist": "BnB Study",
+      "src": "/music/bnb-20-bit-n-byte-yuhok.mp3",
+      "file": "bnb-20-bit-n-byte-yuhok.mp3",
+      "sourceName": "비트 앤 바이트의 유혹.mp3",
+      "md5": "6bb052b3ec64b34159942735d80845eb"
+    }
+  ]
+}
