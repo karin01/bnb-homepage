@@ -12,7 +12,7 @@ export function FloatingCta() {
   }
 
   return (
-    <div className="fixed right-4 bottom-4 z-40 flex flex-col gap-2 md:right-6 md:bottom-6">
+    <div className="fixed right-4 bottom-20 z-40 flex flex-col gap-2 md:right-6 md:bottom-24">
       <Link
         href="/join/apply"
         className="inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-3 text-sm font-semibold text-navy-950 shadow-lg shadow-cyan-500/30 hover:bg-cyan-400"

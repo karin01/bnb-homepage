@@ -4,6 +4,7 @@ import { FloatingCta } from "@/components/layout/FloatingCta";
 import { PopupNoticeModal } from "@/components/layout/PopupNoticeModal";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteMusicPlayer } from "@/components/layout/SiteMusicPlayer";
 import { SITE } from "@/data/site";
 import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <SiteHeader />
               <main>{children}</main>
               <SiteFooter />
+              <SiteMusicPlayer />
               <FloatingCta />
               <PopupNoticeModal />
             </div>
